@@ -1,21 +1,20 @@
 <template>
   <div class="attendance-page">
-    <div class="d-flex align-center justify-space-between mb-6">
+    <div class="d-flex flex-column flex-sm-row align-sm-center justify-sm-space-between mb-6 gap-4">
       <div>
-        <h1 class="text-h4 font-weight-bold text-grey-darken-4 mb-1">Attendance</h1>
-        <div class="text-subtitle-1 text-grey-darken-1">Track daily employee attendance</div>
+        <h1 class="text-h5 text-md-h4 font-weight-bold text-grey-darken-4 mb-1">Attendance</h1>
+        <div class="text-caption text-md-subtitle-1 text-grey-darken-1">Track daily employee attendance</div>
       </div>
       <v-btn color="primary" prepend-icon="mdi-plus" rounded="lg" size="large" class="font-weight-bold px-6 text-none" @click="dialog = true">
         Mark Attendance
       </v-btn>
     </div>
 
-    <!-- Stats Cards -->
     <v-row class="mb-6">
       <v-col v-for="stat in attendanceStats" :key="stat.label" cols="12" sm="6" md="3">
-        <v-card class="rounded-xl pa-4 elevation-0 border-stat" :class="`bg-${stat.bgColor}`">
+        <v-card class="rounded-xl pa-4 elevation-1 border-light" :class="`bg-${stat.color}-lighten-5`">
           <div class="text-subtitle-2 font-weight-bold mb-1" :class="`text-${stat.color}`">{{ stat.label }}</div>
-          <div class="text-h4 font-weight-bold text-grey-darken-4">{{ stat.value }}</div>
+          <div class="text-h4 font-weight-bold text-on-surface">{{ stat.value }}</div>
         </v-card>
       </v-col>
     </v-row>
@@ -62,10 +61,10 @@
       >
         <template v-slot:item.employee="{ item }">
           <div class="d-flex align-center py-3">
-            <v-avatar color="primary-lighten-4" size="40" class="mr-3 text-primary font-weight-bold border">
+            <v-avatar color="primary-lighten-5" size="40" class="mr-3 text-primary font-weight-bold border-light">
               {{ getInitials(item.employee) }}
             </v-avatar>
-            <span class="font-weight-bold text-grey-darken-3">{{ item.employee }}</span>
+            <span class="font-weight-bold text-on-surface">{{ item.employee }}</span>
           </div>
         </template>
         
@@ -279,17 +278,13 @@ const getStatusColor = (status) => {
 </script>
 
 <style scoped>
-.bg-success-lighten-5 { background-color: #f0fdf4 !important; }
-.bg-error-lighten-5 { background-color: #fef2f2 !important; }
-.bg-warning-lighten-5 { background-color: #fffbeb !important; }
-.bg-primary-lighten-5 { background-color: #f5f3ff !important; }
-
 .border-stat {
-  border: 1px solid rgba(0,0,0,0.05) !important;
+  transition: all 0.3s ease;
 }
 
-.border-grey {
-  border: 1px solid #e2e8f0 !important;
+.border-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
 }
 
 .day-card {
@@ -297,7 +292,7 @@ const getStatusColor = (status) => {
   transition: transform 0.2s;
 }
 .day-card:hover:not(.active-day) {
-  background-color: #f1f5f9 !important;
+  background-color: rgba(var(--v-theme-on-surface), 0.05) !important;
   transform: translateY(-2px);
 }
 
@@ -306,9 +301,8 @@ const getStatusColor = (status) => {
 }
 
 .attendance-table :deep(th) {
-  color: #64748b !important;
-  font-weight: 600 !important;
-  border-bottom: 1px solid #f1f5f9;
+  text-transform: none !important;
+  font-size: 0.875rem !important;
 }
 
 .status-select :deep(.v-field__outline) {
@@ -323,9 +317,6 @@ const getStatusColor = (status) => {
   box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.3) !important;
 }
 
+.gap-4 { gap: 16px; }
 .gap-2 { gap: 8px; }
-
-.primary-lighten-4 {
-  background-color: rgb(var(--v-theme-primary), 0.1) !important;
-}
 </style>

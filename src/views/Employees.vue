@@ -20,7 +20,7 @@
           placeholder="Search employees..."
           hide-details
           color="primary"
-          class="bg-grey-lighten-4 rounded-lg search-field w-50"
+          class="bg-surface rounded-lg search-field w-50 border-light"
           style="max-width: 500px;"
         ></v-text-field>
         
@@ -30,7 +30,7 @@
           density="comfortable"
           variant="outlined"
           hide-details
-          class="bg-grey-lighten-4 rounded-lg ml-0 ml-sm-4 w-25"
+          class="bg-surface rounded-lg ml-0 ml-sm-4 w-25 border-light"
           style="max-width: 250px;"
         ></v-select>
       </div>
@@ -56,15 +56,15 @@
         </template>
         
         <template v-slot:item.department="{ item }">
-          <span class="text-grey-darken-3 font-weight-medium">{{ item.department }}</span>
+          <span class="text-on-surface font-weight-medium">{{ item.department }}</span>
         </template>
         
         <template v-slot:item.position="{ item }">
-          <span class="text-grey-darken-3">{{ item.position }}</span>
+          <span class="text-on-surface">{{ item.position }}</span>
         </template>
         
         <template v-slot:item.type="{ item }">
-          <span class="text-grey-darken-2">{{ item.type }}</span>
+          <span class="text-on-surface opacity-70">{{ item.type }}</span>
         </template>
         
         <template v-slot:item.status="{ item }">
@@ -80,7 +80,7 @@
         </template>
         
         <template v-slot:item.hireDate="{ item }">
-          <span class="text-grey-darken-3 font-weight-medium">{{ item.hireDate }}</span>
+          <span class="text-on-surface font-weight-medium">{{ item.hireDate }}</span>
         </template>
       </v-data-table>
     </v-card>
@@ -137,15 +137,9 @@ const getStatusColor = (status) => {
   --v-field-border-opacity: 0;
 }
 .employee-table :deep(th) {
-  color: #64748b !important;
-  font-weight: 600 !important;
   text-transform: none !important;
   font-size: 0.875rem !important;
   background-color: transparent !important;
-  border-bottom: 1px solid #f1f5f9;
-}
-.employee-table :deep(td) {
-  border-bottom: 1px solid #f8fafc !important;
 }
 .gap-4 {
   gap: 16px;

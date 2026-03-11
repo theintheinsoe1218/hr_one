@@ -1,52 +1,35 @@
 <template>
   <div class="leave-page">
     <!-- Header -->
-    <div class="d-flex align-center justify-space-between mb-6">
+    <div class="d-flex flex-column flex-sm-row align-sm-center justify-sm-space-between mb-6 gap-4">
       <div>
-        <h1 class="text-h4 font-weight-bold text-grey-darken-4 mb-1">Leave Management</h1>
-        <div class="text-subtitle-1 text-grey-darken-1">Manage employee leave requests</div>
+        <h1 class="text-h5 text-md-h4 font-weight-bold text-grey-darken-4 mb-1">Leave Management</h1>
+        <div class="text-caption text-md-subtitle-1 text-grey-darken-1">Manage employee leave requests</div>
       </div>
       <v-btn color="primary" prepend-icon="mdi-plus" rounded="lg" size="large" class="font-weight-bold px-6 text-none" @click="dialog = true">
         Request Leave
       </v-btn>
     </div>
 
-    <!-- Leave Balance Cards -->
+    <!-- Leave Stats Cards -->
     <v-row class="mb-6">
-      <v-col v-for="type in leaveTypes" :key="type.name" cols="12" sm="6" md="3">
-        <v-card class="rounded-xl pa-5 elevation-2 h-100">
-          <div class="d-flex align-center justify-space-between mb-3">
-            <v-avatar :color="type.color" variant="tonal" rounded="lg" size="40">
-              <v-icon size="22">{{ type.icon }}</v-icon>
-            </v-avatar>
-            <v-chip :color="type.color" size="small" variant="tonal" class="font-weight-bold">
-              {{ type.total - type.used }} left
-            </v-chip>
-          </div>
-          <div class="text-subtitle-2 text-grey-darken-1 font-weight-bold mb-1">{{ type.name }}</div>
-          <div class="d-flex align-end justify-space-between mb-2">
-            <span class="text-h4 font-weight-bold text-grey-darken-4">{{ type.used }}</span>
-            <span class="text-caption text-grey-darken-1 mb-1">/ {{ type.total }} days</span>
-          </div>
-          <v-progress-linear
-            :model-value="(type.used / type.total) * 100"
-            :color="type.color"
-            height="6"
-            rounded
-          ></v-progress-linear>
+      <v-col v-for="stat in leaveStats" :key="stat.label" cols="12" sm="4">
+        <v-card class="rounded-xl pa-4 elevation-1 border-light" :class="`bg-${stat.color}-lighten-5`">
+          <div class="text-subtitle-2 font-weight-bold mb-1" :class="`text-${stat.color}`">{{ stat.label }}</div>
+          <div class="text-h4 font-weight-bold text-on-surface">{{ stat.value }}</div>
         </v-card>
       </v-col>
     </v-row>
 
     <!-- Tabs + Table -->
     <v-card class="rounded-xl elevation-2">
-      <v-card-title class="pa-6 border-b d-flex align-center justify-space-between">
+      <v-card-title class="pa-4 pa-md-6 border-b d-flex flex-column flex-md-row align-md-center justify-space-between gap-4">
         <span class="text-h6 font-weight-bold">Leave Requests</span>
-        <v-btn-toggle v-model="statusFilter" mandatory color="primary" density="compact" rounded="lg">
-          <v-btn value="all" class="text-none px-4">All</v-btn>
-          <v-btn value="Pending" class="text-none px-4">Pending</v-btn>
-          <v-btn value="Approved" class="text-none px-4">Approved</v-btn>
-          <v-btn value="Rejected" class="text-none px-4">Rejected</v-btn>
+        <v-btn-toggle v-model="statusFilter" mandatory color="primary" density="compact" rounded="lg" class="overflow-x-auto">
+          <v-btn value="all" class="text-none px-3 px-sm-4">All</v-btn>
+          <v-btn value="Pending" class="text-none px-3 px-sm-4">Pending</v-btn>
+          <v-btn value="Approved" class="text-none px-3 px-sm-4">Approved</v-btn>
+          <v-btn value="Rejected" class="text-none px-3 px-sm-4">Rejected</v-btn>
         </v-btn-toggle>
       </v-card-title>
 
@@ -188,12 +171,13 @@ const form = ref({
 const employees = ['Thein Thein', 'Emily Rodriguez', 'Michael Chen', 'Lisa Thompson', 'Sarah Johnson']
 const leaveTypeOptions = ['Annual Leave', 'Sick Leave', 'Casual Leave', 'Maternity/Paternity Leave', 'Emergency Leave']
 
-const leaveTypes = [
-  { name: 'Annual Leave', used: 8, total: 15, color: 'primary', icon: 'mdi-umbrella-beach' },
-  { name: 'Sick Leave', used: 2, total: 10, color: 'success', icon: 'mdi-medical-bag' },
-  { name: 'Casual Leave', used: 3, total: 6, color: 'warning', icon: 'mdi-briefcase-clock' },
-  { name: 'Maternity/Paternity', used: 0, total: 90, color: 'info', icon: 'mdi-baby-carriage' },
-]
+const leaveStats = computed(() => {
+  return [
+    { label: 'Pending', value: requests.value.filter(r => r.status === 'Pending').length, color: 'warning', bgColor: 'warning-lighten-5' },
+    { label: 'Approved', value: requests.value.filter(r => r.status === 'Approved').length, color: 'success', bgColor: 'success-lighten-5' },
+    { label: 'Rejected', value: requests.value.filter(r => r.status === 'Rejected').length, color: 'error', bgColor: 'error-lighten-5' },
+  ]
+})
 
 const headers = [
   { title: 'Employee', key: 'employee', sortable: true },
@@ -272,17 +256,19 @@ const closeDialog = () => {
 </script>
 
 <style scoped>
-.border-b {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+.border-stat {
+  transition: all 0.3s ease;
 }
-.border-grey {
-  border-color: #e2e8f0 !important;
+
+.border-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
 }
+
+.gap-4 { gap: 16px; }
 .gap-1 { gap: 4px; }
 .attendance-table :deep(th) {
-  color: #64748b !important;
-  font-weight: 600 !important;
-  border-bottom: 1px solid #f1f5f9;
   text-transform: none !important;
+  font-size: 0.875rem !important;
 }
 </style>

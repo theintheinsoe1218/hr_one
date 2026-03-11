@@ -1,31 +1,41 @@
 <template>
   <v-app>
-    <v-navigation-drawer v-model="drawer" :rail="rail" permanent @click="rail = false" color="surface" elevation="2" class="d-flex flex-column" style="height: 100vh;">
+    <!-- Responsive Navigation Drawer -->
+    <v-navigation-drawer 
+      v-model="drawer" 
+      :rail="rail && $vuetify.display.lgAndUp"
+      :permanent="$vuetify.display.lgAndUp"
+      :temporary="$vuetify.display.mdAndDown"
+      @click="rail = false" 
+      color="surface" 
+      elevation="2" 
+      class="d-flex flex-column"
+    >
       <!-- Fixed Header -->
-      <div class="d-flex align-center pa-2 flex-shrink-0" :class="rail ? 'justify-center' : 'pa-4'">
-        <v-avatar color="primary" rounded size="40" :class="rail ? 'mr-0' : 'mr-3'">
+      <div class="d-flex align-center pa-2 flex-shrink-0" :class="(rail && $vuetify.display.lgAndUp) ? 'justify-center' : 'pa-4'">
+        <v-avatar color="primary" rounded size="40" :class="(rail && $vuetify.display.lgAndUp) ? 'mr-0' : 'mr-3'">
           <span class="text-white font-weight-bold">HR</span>
         </v-avatar>
-        <div v-show="!rail" class="lh-tight">
+        <div v-show="!(rail && $vuetify.display.lgAndUp)" class="lh-tight">
           <div class="font-weight-bold text-h6 text-grey-darken-4">HRMS Pro</div>
           <div class="text-caption text-grey-darken-1 font-weight-medium">Human Resources</div>
         </div>
-        <v-spacer v-show="!rail"></v-spacer>
-        <v-btn v-show="!rail" icon="mdi-chevron-left" variant="text" density="comfortable" @click.stop="rail = !rail"></v-btn>
+        <v-spacer v-show="!(rail && $vuetify.display.lgAndUp)"></v-spacer>
+        <v-btn v-show="!(rail && $vuetify.display.lgAndUp) && $vuetify.display.lgAndUp" icon="mdi-chevron-left" variant="text" density="comfortable" @click.stop="rail = !rail"></v-btn>
       </div>
       
       <v-divider class="flex-shrink-0"></v-divider>
-
+ 
       <!-- Scrollable Menu -->
       <div class="flex-grow-1 overflow-y-auto custom-scrollbar">
-        <v-list density="comfortable" nav class="px-3 mt-4" :class="rail ? 'px-1' : 'px-3'">
+        <v-list density="comfortable" nav class="px-3 mt-4" :class="(rail && $vuetify.display.lgAndUp) ? 'px-1' : 'px-3'">
           <v-list-item v-for="item in menuItems" :key="item.value"
             :prepend-icon="item.icon" 
             :title="item.title" 
             :value="item.value" 
             :to="item.to"
             class="mb-1 rounded-lg"
-            :class="rail ? 'px-2' : 'px-4'" 
+            :class="(rail && $vuetify.display.lgAndUp) ? 'px-2' : 'px-4'" 
             active-class="bg-primary text-white shadow-item"
           ></v-list-item>
         </v-list>
@@ -35,7 +45,7 @@
     <v-app-bar elevation="0" color="background" class="border-b px-4">
       <v-app-bar-nav-icon v-if="$vuetify.display.mdAndDown" @click="drawer = !drawer"></v-app-bar-nav-icon>
       
-      <v-toolbar-title class="font-weight-bold text-h5 text-grey-darken-3">{{ pageTitle }}</v-toolbar-title>
+      <v-toolbar-title class="font-weight-bold text-md-h5 text-subtitle-1 text-grey-darken-3">{{ pageTitle }}</v-toolbar-title>
       
       <v-spacer></v-spacer>
 
@@ -75,9 +85,11 @@
       </v-menu>
     </v-app-bar>
 
-    <v-main class="bg-background">
-      <div class="pa-6 fill-height" style="max-width: 1600px; margin: 0 auto;">
-        <router-view></router-view>
+    <v-main class="bg-background main-content">
+      <div class="scroll-container pa-4 pa-md-6 custom-scrollbar">
+        <div class="content-wrapper">
+          <router-view></router-view>
+        </div>
       </div>
     </v-main>
   </v-app>
@@ -96,8 +108,8 @@ const authStore = useAuthStore()
 const theme = useTheme()
 const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
 
-const drawer = ref(true)
-const rail = ref(false)
+const drawer = ref(null)
+const rail = ref(true)
 
 const menuItems = [
   { title: 'Dashboard', icon: 'mdi-view-dashboard-outline', value: 'dashboard', to: { name: 'dashboard' } },
@@ -109,6 +121,7 @@ const menuItems = [
   { title: 'Performance', icon: 'mdi-star-outline', value: 'performance', to: { name: 'performance' } },
   { title: 'My Reviews', icon: 'mdi-account-star-outline', value: 'reviews', to: { name: 'reviews' } },
   { title: 'Recruitment', icon: 'mdi-briefcase-outline', value: 'recruitment', to: { name: 'recruitment' } },
+  { title: 'User Management', icon: 'mdi-shield-account-outline', value: 'user-management', to: { name: 'user-management' } },
 ]
 
 const pageTitle = computed(() => {
@@ -131,6 +144,26 @@ const logout = () => {
 }
 .v-theme--dark .border-b {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.main-content {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.scroll-container {
+  height: calc(100vh - 64px); /* Subtract AppBar height */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: smooth;
+}
+
+.content-wrapper {
+  flex: 1;
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
 }
 .lh-tight {
   line-height: 1.2;

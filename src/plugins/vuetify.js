@@ -13,29 +13,33 @@ export default createVuetify({
             light: {
                 dark: false,
                 colors: {
-                    primary: '#8b5cf6', // Indigo/Purple tone to match user reference image
-                    secondary: '#475569',
-                    accent: '#7dd3fc',
+                    primary: '#6366f1', // Indigo (Eye-friendly, professional)
+                    secondary: '#64748b', // Slate
+                    accent: '#06b6d4',
                     error: '#ef4444',
                     info: '#3b82f6',
-                    success: '#22c55e',
+                    success: '#10b981',
                     warning: '#f59e0b',
                     background: '#f8fafc',
-                    surface: '#ffffff'
+                    surface: '#ffffff',
+                    'on-surface': '#1e293b',
+                    'on-background': '#1e293b'
                 }
             },
             dark: {
                 dark: true,
                 colors: {
-                    primary: '#3b82f6',
+                    primary: '#818cf8', // Lighter Indigo for contrast
                     secondary: '#94a3b8',
-                    accent: '#0369a1',
+                    accent: '#22d3ee',
                     error: '#f87171',
                     info: '#60a5fa',
-                    success: '#4ade80',
+                    success: '#34d399',
                     warning: '#fbbf24',
-                    background: '#0f172a',
-                    surface: '#1e293b'
+                    background: '#0f172a', // Deep Slate
+                    surface: '#1e293b', // Lighter Slate for cards
+                    'on-surface': '#f1f5f9',
+                    'on-background': '#f1f5f9'
                 }
             }
         }
