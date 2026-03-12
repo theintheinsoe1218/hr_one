@@ -23,7 +23,7 @@
     <v-card class="rounded-xl elevation-2 pa-6 mb-6">
       <div class="d-flex align-center justify-center mb-6">
         <v-btn icon="mdi-chevron-left" variant="outlined" density="comfortable" class="rounded-lg mr-4 border-grey" @click="changeWeek(-1)"></v-btn>
-        <span class="text-h6 font-weight-bold text-grey-darken-3">{{ weekRangeText }}</span>
+        <span class="text-h6 font-weight-bold text-on-surface">{{ weekRangeText }}</span>
         <v-btn icon="mdi-chevron-right" variant="outlined" density="comfortable" class="rounded-lg ml-4 border-grey" @click="changeWeek(1)"></v-btn>
       </div>
 
@@ -96,86 +96,139 @@
     </v-card>
 
     <!-- Mark Attendance Dialog -->
-    <v-dialog v-model="dialog" max-width="500px">
-      <v-card class="rounded-xl pa-4">
-        <v-card-title class="d-flex align-center justify-space-between pa-4">
-          <span class="text-h5 font-weight-bold">Mark Attendance</span>
-          <v-btn icon="mdi-close" variant="text" @click="dialog = false"></v-btn>
+    <v-dialog v-model="dialog" max-width="500px" scrollable>
+      <v-card class="rounded-xl d-flex flex-column" style="max-height: 90vh;">
+        <v-card-title class="d-flex align-center justify-space-between pa-5 flex-shrink-0">
+          <span class="text-h6 font-weight-bold text-on-surface">Mark Attendance</span>
+          <v-btn icon="mdi-close" variant="text" size="small" @click="dialog = false"></v-btn>
         </v-card-title>
-        
-        <v-card-text class="pa-4">
+        <v-divider></v-divider>
+
+        <v-card-text class="pa-5 overflow-y-auto flex-grow-1">
+
+          <!-- Employee -->
           <div class="mb-4">
-            <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Employee</label>
+            <label class="text-subtitle-2 font-weight-bold mb-2 d-block text-on-surface">Employee</label>
             <v-select
+              v-model="attendanceForm.employee"
               placeholder="Select employee"
-              :items="['Thein Thein', 'Emily Rodriguez', 'Michael Chen']"
+              :items="['Thein Thein', 'Emily Rodriguez', 'Michael Chen', 'Lisa Thompson', 'Sarah Johnson']"
               variant="outlined"
               hide-details
               rounded="lg"
+              prepend-inner-icon="mdi-account-outline"
             ></v-select>
           </div>
 
+          <!-- Date Picker -->
           <div class="mb-4">
-            <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Date</label>
-            <v-text-field
-              type="date"
-              v-model="attendanceForm.date"
-              variant="outlined"
-              hide-details
-              rounded="lg"
-              prepend-inner-icon="mdi-calendar"
-            ></v-text-field>
+            <label class="text-subtitle-2 font-weight-bold mb-2 d-block text-on-surface">Date</label>
+            <v-menu v-model="dateMenu" :close-on-content-click="false" offset-y>
+              <template v-slot:activator="{ props }">
+                <v-text-field
+                  v-bind="props"
+                  :model-value="attendanceForm.date"
+                  variant="outlined"
+                  hide-details
+                  rounded="lg"
+                  prepend-inner-icon="mdi-calendar"
+                  readonly
+                  placeholder="Select date"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="datePicker"
+                @update:model-value="onDatePick"
+                color="primary"
+                show-adjacent-months
+              ></v-date-picker>
+            </v-menu>
           </div>
 
+          <!-- Clock In & Clock Out -->
           <v-row class="mb-4">
             <v-col cols="6">
-              <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Clock In</label>
-              <v-text-field
-                placeholder="--:-- --"
-                variant="outlined"
-                hide-details
-                rounded="lg"
-                prepend-inner-icon="mdi-clock-outline"
-              ></v-text-field>
+              <label class="text-subtitle-2 font-weight-bold mb-2 d-block text-on-surface">Clock In</label>
+              <v-menu v-model="clockInMenu" :close-on-content-click="false">
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    :model-value="attendanceForm.clockIn"
+                    variant="outlined"
+                    hide-details
+                    rounded="lg"
+                    prepend-inner-icon="mdi-clock-outline"
+                    placeholder="--:--"
+                    readonly
+                  ></v-text-field>
+                </template>
+                <v-time-picker
+                  v-model="attendanceForm.clockIn"
+                  format="24hr"
+                  color="primary"
+                  @update:model-value="clockInMenu = false"
+                ></v-time-picker>
+              </v-menu>
             </v-col>
             <v-col cols="6">
-              <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Clock Out</label>
-              <v-text-field
-                placeholder="--:-- --"
-                variant="outlined"
-                hide-details
-                rounded="lg"
-                prepend-inner-icon="mdi-clock-outline"
-              ></v-text-field>
+              <label class="text-subtitle-2 font-weight-bold mb-2 d-block text-on-surface">Clock Out</label>
+              <v-menu v-model="clockOutMenu" :close-on-content-click="false">
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    :model-value="attendanceForm.clockOut"
+                    variant="outlined"
+                    hide-details
+                    rounded="lg"
+                    prepend-inner-icon="mdi-clock-outline"
+                    placeholder="--:--"
+                    readonly
+                  ></v-text-field>
+                </template>
+                <v-time-picker
+                  v-model="attendanceForm.clockOut"
+                  format="24hr"
+                  color="primary"
+                  @update:model-value="clockOutMenu = false"
+                ></v-time-picker>
+              </v-menu>
             </v-col>
           </v-row>
 
+          <!-- Status -->
           <div class="mb-4">
-            <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Status</label>
+            <label class="text-subtitle-2 font-weight-bold mb-2 d-block text-on-surface">Status</label>
             <v-select
               v-model="attendanceForm.status"
               :items="['Present', 'Absent', 'Late', 'On Leave']"
               variant="outlined"
               hide-details
               rounded="lg"
+              prepend-inner-icon="mdi-check-circle-outline"
             ></v-select>
           </div>
 
-          <div class="mb-4">
-            <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Notes</label>
-            <v-text-field
+          <!-- Notes -->
+          <div class="mb-2">
+            <label class="text-subtitle-2 font-weight-bold mb-2 d-block text-on-surface">Notes</label>
+            <v-textarea
+              v-model="attendanceForm.notes"
               placeholder="Optional notes"
               variant="outlined"
               hide-details
               rounded="lg"
-            ></v-text-field>
+              rows="2"
+              no-resize
+            ></v-textarea>
           </div>
+
         </v-card-text>
 
-        <v-card-actions class="pa-4 pt-0">
+        <v-divider></v-divider>
+        <v-card-actions class="pa-5 flex-shrink-0">
           <v-spacer></v-spacer>
-          <v-btn variant="outlined" rounded="lg" class="px-6 border-grey text-none" @click="dialog = false">Cancel</v-btn>
-          <v-btn color="primary" rounded="lg" class="px-6 text-none font-weight-bold ml-3" @click="dialog = false">Save Attendance</v-btn>
+          <v-btn variant="outlined" rounded="lg" class="px-6 text-none" @click="dialog = false">Cancel</v-btn>
+          <v-btn color="primary" rounded="lg" class="px-6 text-none font-weight-bold ml-2" @click="saveAttendance">Save Attendance</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -185,15 +238,54 @@
 <script setup>
 import { ref, computed } from 'vue'
 
+const today = new Date()
+const toISODate = (d) => d.toISOString().split('T')[0]
+
 const dialog = ref(false)
 const search = ref('')
-const selectedDate = ref('2026-03-11')
-const baseDate = ref(new Date('2026-03-11'))
+const selectedDate = ref(toISODate(today))
+const baseDate = ref(today)
 
 const attendanceForm = ref({
-  date: '2026-03-11',
-  status: 'Present'
+  employee: '',
+  date: toISODate(today),
+  clockIn: '',
+  clockOut: '',
+  status: 'Present',
+  notes: ''
 })
+
+const dateMenu    = ref(false)
+const clockInMenu  = ref(false)
+const clockOutMenu = ref(false)
+const datePicker   = ref(new Date())
+
+const onDatePick = (val) => {
+  // val is a Date object from v-date-picker
+  attendanceForm.value.date = toISODate(val)
+  dateMenu.value = false
+}
+
+const saveAttendance = () => {
+  if (!attendanceForm.value.employee) return
+  const calcHours = () => {
+    if (!attendanceForm.value.clockIn || !attendanceForm.value.clockOut) return '-'
+    const [ih, im] = attendanceForm.value.clockIn.split(':').map(Number)
+    const [oh, om] = attendanceForm.value.clockOut.split(':').map(Number)
+    const diff = (oh * 60 + om) - (ih * 60 + im)
+    if (diff <= 0) return '-'
+    return `${Math.floor(diff/60)}h${diff%60 ? ' ' + diff%60 + 'm' : ''}`
+  }
+  allAttendanceRecords.value.push({
+    employee:  attendanceForm.value.employee,
+    clockIn:   attendanceForm.value.clockIn  || '--:--',
+    clockOut:  attendanceForm.value.clockOut || '--:--',
+    workHours: calcHours(),
+    status:    attendanceForm.value.status,
+    date:      attendanceForm.value.date,
+  })
+  dialog.value = false
+}
 
 // MOCK DATA with dates
 const allAttendanceRecords = ref([

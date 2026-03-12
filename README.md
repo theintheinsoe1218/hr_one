@@ -1,32 +1,42 @@
-# HRMS Pro - Human Resource Management System
+# Aura HR - Human Resource Management System
 
 <div align="center">
 
-![HRMS Pro](https://img.shields.io/badge/HRMS-Pro-8b5cf6?style=for-the-badge&logo=vue.js&logoColor=white)
+![Aura HR](https://img.shields.io/badge/Aura-HR-8b5cf6?style=for-the-badge&logo=vue.js&logoColor=white)
 ![Vue 3](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat-square&logo=vue.js&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![Vuetify](https://img.shields.io/badge/Vuetify-3.x-1867C0?style=flat-square&logo=vuetify&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-A modern, feature-rich Human Resource Management System built with Vue 3 and Vuetify 3.
+A modern, feature-rich Human Resource Management System built with Vue 3 and Vuetify 3. Focused on clean aesthetics, user experience, and enterprise-grade functionality.
 
 </div>
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
 | Module | Description |
 |--------|-------------|
-| 🏠 **Dashboard** | HR overview with KPI stats, employee growth chart & recent activity feed |
-| 👥 **Employees** | Employee directory with search, department filter & status management |
-| 🕐 **Attendance** | Dynamic daily attendance tracker with weekly calendar navigation |
-| 📅 **Leave Management** | Leave request workflow with balance tracker & approval system |
-| ⏰ **Overtime** | OT log management with approval tracking |
-| 💰 **Payroll** | Salary summary, pay stub download & payment history |
-| ⭐ **Performance** | KPI tracking, goal progress & employee evaluations |
-| 📝 **My Reviews** | Personal performance reviews & peer feedback |
-| 💼 **Recruitment** | Job postings, candidate management & pipeline tracking |
+| 🏠 **Dashboard** | Executive overview with real-time KPI cards, pending request summaries, and applicant tracking. |
+| 👥 **Employees** | Full directory with a **3-tab "Add Employee" dialog**, **sliding detail panel**, and advanced filtering. |
+| 🕐 **Attendance** | Weekly calendar view with a "Mark Attendance" workflow featuring **Vuetify Time & Date pickers**. |
+| 📅 **Leave Management** | Request workflow with automated balance tracking and approval/rejection system. |
+| ⏰ **Overtime** | Unified OT logging with multiplier selection (1.5x, 2.0x) and approval status tracking. |
+| 💰 **Payroll** | Payslip generation with **Print functionality**, auto-salary calculation, and net-pay logic. |
+| ⭐ **Performance** | Template-based reviews with weighted criteria, rating scales (1-10), and history tracking. |
+| 💼 **Recruitment** | Job postings management and a **Drag-and-Drop Kanban Board** for applicant pipeline. |
+| 🔐 **User Management** | Complete RBAC (Role-Based Access Control) for Super Admin, Admin, HR, and Employees. |
+
+---
+
+## 🎨 UI/UX Highlights
+
+- **Modern Aesthetics**: Premium glassmorphism effects, vibrant purple/indigo theme, and high-quality typography (Inter/Outfit).
+- **Persistence Theme**: Automatically saves your Dark/Light mode preference to `localStorage`.
+- **Smart Sidebar**: Intelligent navigation with **Rail (Collapsed)** and **Expanded** modes. The rail mode keeps the interface focused but remains fully functional.
+- **Micro-animations**: Smooth transitions, hover effects, and loading states for a premium feel.
+- **Theme-Aware Colors**: Fully adaptive UI that looks stunning in both light and dark modes.
 
 ---
 
@@ -37,11 +47,8 @@ A modern, feature-rich Human Resource Management System built with Vue 3 and Vue
 - **[Vuetify 3](https://vuetifyjs.com/)** - Material Design Component Framework
 - **[Vue Router 4](https://router.vuejs.org/)** - Official Vue.js Router
 - **[Pinia](https://pinia.vuejs.org/)** - Intuitive Vue.js State Management
-- **[Axios](https://axios-http.com/)** - HTTP Client with JWT Interceptors
-- **[Chart.js](https://www.chartjs.org/)** + **[vue-chartjs](https://vue-chartjs.org/)** - Beautiful Charts
-- **[VueUse](https://vueuse.org/)** - Collection of Vue Composition Utilities
-- **[JWT Decode](https://github.com/auth0/jwt-decode)** - JSON Web Token decoder
-- **[@mdi/font](https://pictogrammers.com/library/mdi/)** - Material Design Icons
+- **[Chart.js](https://www.chartjs.org/)** - Data visualization for HR metrics
+- **[@mdi/font](https://pictogrammers.com/library/mdi/)** - Comprehensive Material Design icon set
 
 ---
 
@@ -53,32 +60,33 @@ hr_one/
 ├── src/
 │   ├── components/
 │   │   ├── layout/
-│   │   │   └── DashboardLayout.vue   # Sidebar + Topbar layout
-│   │   └── AttendanceChart.vue       # Weekly attendance bar chart
+│   │   │   └── DashboardLayout.vue   # Sidebar + Topbar logic
+│   │   └── AttendanceChart.vue       # Analytics components
 │   ├── plugins/
-│   │   └── vuetify.js                # Vuetify theme configuration
+│   │   └── vuetify.js                # Theme & global settings
 │   ├── router/
-│   │   └── index.js                  # Vue Router with auth guards
+│   │   └── index.js                  # App routing & auth guards
 │   ├── store/
-│   │   └── auth.js                   # Pinia auth store (JWT)
+│   │   └── auth.js                   # Auth state management
 │   ├── utils/
-│   │   └── api.js                    # Axios instance + interceptors
-│   ├── views/
-│   │   ├── Login.vue
+│   │   └── api.js                    # API client config
+│   ├── views/                        # Feature Pages
+│   │   ├── Attendance.vue
 │   │   ├── Dashboard.vue
 │   │   ├── Employees.vue
-│   │   ├── Attendance.vue
 │   │   ├── Leave.vue
+│   │   ├── Login.vue
 │   │   ├── Overtime.vue
 │   │   ├── Payroll.vue
 │   │   ├── Performance.vue
+│   │   ├── Recruitment.vue
 │   │   ├── Reviews.vue
-│   │   └── Recruitment.vue
+│   │   └── UserManagement.vue
 │   ├── App.vue
 │   └── main.js
 ├── index.html
-├── vite.config.js
 ├── package.json
+├── vite.config.js
 └── README.md
 ```
 
@@ -88,119 +96,48 @@ hr_one/
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) v18 or higher
+- [Node.js](https://nodejs.org/) v18+ 
 - npm or yarn
 
 ### Installation
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/theintheinsoe1218/hr_one.git
-
-# 2. Navigate to project directory
-cd hr_one
-
-# 3. Install dependencies
+# 1. Install dependencies
 npm install
 
-# 4. Start the development server
+# 2. Start development server
 npm run dev
+
+# 3. Build for production
+npm run build
 ```
 
 Open **http://localhost:5173** in your browser.
 
 ---
 
-## 🔐 Authentication
+## 🔐 Demo Credentials
 
-The application uses **JWT-based authentication**. For the demo:
-
-| Field | Value |
-|-------|-------|
-| Email | `admin@synergy.com` |
-| Password | `password` |
-
-> **Note:** The current implementation uses mock authentication. To connect to a real backend, update `src/store/auth.js` with your actual API endpoint and configure `VITE_API_URL` in your `.env` file.
-
-### Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-VITE_API_URL=http://your-api-server.com/api
-```
+| Role | Email | Password |
+|------|-------|----------|
+| Super Admin | `admin@synergy.com` | `password` |
 
 ---
 
-## 📦 Available Scripts
+## �️ Roadmap Progress
 
-```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
----
-
-## 🎨 Theme & Customization
-
-The app uses a **purple/indigo color palette** configured in `src/plugins/vuetify.js`. Both **Light** and **Dark** modes are supported and can be toggled from the top navigation bar.
-
-To change the primary color:
-
-```js
-// src/plugins/vuetify.js
-colors: {
-  primary: '#8b5cf6',  // Change this to your brand color
-  ...
-}
-```
-
----
-
-## 📸 Screenshots
-
-| Page | Description |
-|------|-------------|
-| Login | JWT-secured login with role-based access |
-| Dashboard | Executive overview with charts & activity feed |
-| Attendance | Weekly calendar with daily record tracking |
-| Leave Management | Leave balance cards + request approval workflow |
-
----
-
-## 🔌 API Integration
-
-All HTTP requests go through the centralized Axios instance in `src/utils/api.js`:
-
-- **Request Interceptor** – Automatically attaches JWT Bearer token to every request
-- **Response Interceptor** – Handles `401 Unauthorized` by logging out and redirecting to `/login`
-
----
-
-## 🗺️ Roadmap
-
-- [ ] Backend API integration
-- [ ] Role-based access control (Admin / HR / Manager / Staff)
-- [ ] Real-time notifications
-- [ ] Employee document uploads
-- [ ] Payroll calculation engine
-- [ ] Reporting & export to Excel/PDF
-- [ ] Mobile responsive improvements
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
+- [x] Modern UI Design & Dashboard
+- [x] Advanced Employee Management (Drawer/Tabs)
+- [x] Multi-mode Sidebar (Rail/Expand)
+- [x] Auto-persistent Theme (Dark/Light)
+- [x] Kanban Board for Recruitment
+- [x] Payslip Printing System
+- [ ] Real Backend API Integration
+- [ ] Push Notifications for Leave/OT Requests
+- [ ] Advanced PDF Reporting Exports
 
 ---
 
 <div align="center">
-  Made with ❤️ using Vue 3 + Vuetify 3
+  Made with ❤️ for HR Professionals
 </div>

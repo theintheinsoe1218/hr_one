@@ -1,61 +1,135 @@
 <template>
   <div class="dashboard-page">
-    <h1 class="text-h5 text-md-h4 font-weight-bold text-grey-darken-4 mb-6">HR Overview</h1>
-    
+    <!-- Header -->
+    <div class="mb-6">
+      <h1 class="text-h5 text-md-h4 font-weight-bold text-on-surface mb-1">Dashboard</h1>
+      <div class="text-body-2 text-medium-emphasis">
+        Welcome back! <span class="text-primary font-weight-medium">Here's</span> what's happening today, {{ todayText }}
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
     <v-row class="mb-6">
       <v-col v-for="stat in stats" :key="stat.title" cols="12" sm="6" md="3">
-        <v-card class="rounded-xl pa-4 pa-md-6 elevation-2 border-l-4" :style="`border-left-color: ${stat.color}`">
-          <div class="d-flex justify-space-between align-center">
+        <v-card class="rounded-xl pa-5 elevation-1 stat-card">
+          <div class="d-flex justify-space-between align-start">
             <div>
-              <div class="text-caption text-grey-darken-1 font-weight-bold text-uppercase mb-1">{{ stat.title }}</div>
-              <div class="text-h5 text-md-h4 font-weight-bold">{{ stat.value }}</div>
+              <div class="text-caption text-medium-emphasis font-weight-medium mb-2">{{ stat.title }}</div>
+              <div class="text-h4 font-weight-bold text-on-surface mb-1">{{ stat.value }}</div>
+              <div class="text-caption text-medium-emphasis">{{ stat.subtitle }}</div>
             </div>
-            <v-avatar :color="stat.color" variant="tonal" rounded="lg" size="40" class="d-none d-sm-flex">
-              <v-icon>{{ stat.icon }}</v-icon>
+            <v-avatar :color="stat.color" size="52" rounded="lg" class="stat-icon-avatar">
+              <v-icon size="26" color="white">{{ stat.icon }}</v-icon>
             </v-avatar>
-          </div>
-          <div class="mt-4 d-flex align-center text-caption font-weight-bold" :class="stat.trendUp ? 'text-success' : 'text-error'">
-            <v-icon size="14" class="mr-1">{{ stat.trendUp ? 'mdi-trending-up' : 'mdi-trending-down' }}</v-icon>
-            {{ stat.trend }} vs last month
           </div>
         </v-card>
       </v-col>
     </v-row>
 
-    <v-row>
-      <v-col cols="12" lg="8">
-        <v-card class="rounded-xl elevation-2 pa-6 h-100">
-          <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center mb-6 gap-4">
-            <h2 class="text-h6 font-weight-bold">Employee Growth</h2>
-            <v-btn-toggle v-model="growthFilter" mandatory color="primary" density="compact" rounded="lg">
-              <v-btn value="6m" class="text-none">6 Months</v-btn>
-              <v-btn value="1y" class="text-none">1 Year</v-btn>
-            </v-btn-toggle>
+    <!-- Pending Leave & Overtime Requests -->
+    <v-row class="mb-6">
+      <!-- Pending Leave Requests -->
+      <v-col cols="12" md="6">
+        <v-card class="rounded-xl elevation-1 pa-5 h-100">
+          <div class="d-flex justify-space-between align-center mb-4">
+            <h2 class="text-subtitle-1 font-weight-bold text-on-surface">Pending Leave Requests</h2>
+            <v-btn to="/leave" variant="text" color="primary" size="small" class="text-none font-weight-medium px-0" append-icon="mdi-arrow-right">
+              View All
+            </v-btn>
           </div>
-          <div class="chart-container" style="height: 300px;">
-             <!-- Simplified visualization of a chart -->
-             <div class="d-flex align-end justify-space-between h-100 px-4">
-               <div v-for="(h, i) in [40, 60, 45, 80, 70, 95]" :key="i" 
-                    class="bg-primary rounded-t-lg" 
-                    :style="`height: ${h}%; width: 40px; opacity: ${0.5 + (i*0.1)}`"
-               ></div>
-             </div>
+          <div v-for="req in leaveRequests" :key="req.id" class="d-flex align-center justify-space-between py-3 request-row">
+            <div class="d-flex align-center gap-3">
+              <v-avatar :color="req.color" size="38" class="font-weight-bold text-caption">
+                {{ getInitials(req.name) }}
+              </v-avatar>
+              <div>
+                <div class="text-subtitle-2 font-weight-bold text-on-surface">{{ req.name }}</div>
+                <div class="text-caption text-medium-emphasis">{{ req.type }}</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-caption font-weight-bold text-on-surface">{{ req.duration }}</div>
+              <div class="text-caption text-medium-emphasis">{{ req.date }}</div>
+            </div>
           </div>
         </v-card>
       </v-col>
-      <v-col cols="12" lg="4">
-        <v-card class="rounded-xl elevation-2 pa-6 h-100">
-          <h2 class="text-h6 font-weight-bold mb-6">Recent Activities</h2>
-          <v-timeline density="compact" side="end">
-            <v-timeline-item v-for="activity in activities" :key="activity.id" 
-                            :dot-color="activity.color" size="x-small">
-              <div class="mb-4">
-                <div class="text-subtitle-2 font-weight-bold">{{ activity.title }}</div>
-                <div class="text-caption text-grey-darken-1">{{ activity.desc }}</div>
-                <div class="text-caption text-grey-lighten-1 mt-1">{{ activity.time }}</div>
+
+      <!-- Pending Overtime Requests -->
+      <v-col cols="12" md="6">
+        <v-card class="rounded-xl elevation-1 pa-5 h-100">
+          <div class="d-flex justify-space-between align-center mb-4">
+            <h2 class="text-subtitle-1 font-weight-bold text-on-surface">Pending Overtime Requests</h2>
+            <v-btn to="/overtime" variant="text" color="primary" size="small" class="text-none font-weight-medium px-0" append-icon="mdi-arrow-right">
+              View All
+            </v-btn>
+          </div>
+          <div v-for="req in overtimeRequests" :key="req.id" class="d-flex align-center justify-space-between py-3 request-row">
+            <div class="d-flex align-center gap-3">
+              <v-avatar :color="req.color" size="38" class="font-weight-bold text-caption">
+                {{ getInitials(req.name) }}
+              </v-avatar>
+              <div>
+                <div class="text-subtitle-2 font-weight-bold text-on-surface">{{ req.name }}</div>
+                <div class="text-caption text-medium-emphasis">{{ req.date }}</div>
               </div>
-            </v-timeline-item>
-          </v-timeline>
+            </div>
+            <div class="text-right">
+              <div class="text-caption font-weight-bold text-on-surface">{{ req.hours }}</div>
+              <div class="text-caption text-medium-emphasis">{{ req.rate }}</div>
+            </div>
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Recent Applicants & Open Positions -->
+    <v-row>
+      <!-- Recent Applicants -->
+      <v-col cols="12" md="6">
+        <v-card class="rounded-xl elevation-1 pa-5">
+          <div class="d-flex justify-space-between align-center mb-4">
+            <h2 class="text-subtitle-1 font-weight-bold text-on-surface">Recent Applicants</h2>
+            <v-btn to="/recruitment" variant="text" color="primary" size="small" class="text-none font-weight-medium px-0" append-icon="mdi-arrow-right">
+              View All
+            </v-btn>
+          </div>
+          <div v-for="applicant in recentApplicants" :key="applicant.id" class="d-flex align-center justify-space-between py-3 request-row">
+            <div class="d-flex align-center gap-3">
+              <v-avatar :color="applicant.color" size="38" class="font-weight-bold text-caption">
+                {{ getInitials(applicant.name) }}
+              </v-avatar>
+              <div>
+                <div class="text-subtitle-2 font-weight-bold text-on-surface">{{ applicant.name }}</div>
+                <div class="text-caption text-medium-emphasis">{{ applicant.role }}</div>
+              </div>
+            </div>
+            <v-chip
+              :color="getStatusColor(applicant.status)"
+              size="small"
+              variant="tonal"
+              class="font-weight-medium text-caption"
+            >{{ applicant.status }}</v-chip>
+          </div>
+        </v-card>
+      </v-col>
+
+      <!-- Open Positions -->
+      <v-col cols="12" md="6">
+        <v-card class="rounded-xl elevation-1 pa-5">
+          <div class="d-flex justify-space-between align-center mb-4">
+            <h2 class="text-subtitle-1 font-weight-bold text-on-surface">Open Positions</h2>
+            <v-btn to="/recruitment" variant="text" color="primary" size="small" class="text-none font-weight-medium px-0" append-icon="mdi-arrow-right">
+              View All
+            </v-btn>
+          </div>
+          <div v-for="pos in openPositions" :key="pos.id" class="d-flex align-center justify-space-between py-3 request-row">
+            <div>
+              <div class="text-subtitle-2 font-weight-bold text-on-surface">{{ pos.title }}</div>
+              <div class="text-caption text-primary">{{ pos.dept }} · {{ pos.type }}</div>
+            </div>
+            <div class="text-caption font-weight-medium text-primary">{{ pos.applicants }} applicants</div>
+          </div>
         </v-card>
       </v-col>
     </v-row>
@@ -63,36 +137,70 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 
-const growthFilter = ref('6m')
+const todayText = computed(() => {
+  return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+})
 
 const stats = [
-  { title: 'Total Employees', value: '1,248', icon: 'mdi-account-group', color: '#8b5cf6', trend: '12%', trendUp: true },
-  { title: 'New Hires', value: '52', icon: 'mdi-account-plus', color: '#10b981', trend: '5%', trendUp: true },
-  { title: 'On Leave', value: '18', icon: 'mdi-calendar-clock', color: '#f59e0b', trend: '2%', trendUp: false },
-  { title: 'Open Jobs', value: '24', icon: 'mdi-briefcase-search', color: '#3b82f6', trend: '8%', trendUp: true },
+  { title: 'Total Employees', value: '5',  subtitle: '6 total',           icon: 'mdi-account-group-outline', color: '#7C3AED' },
+  { title: 'Present Today',   value: '0',  subtitle: 'of 5 active',       icon: 'mdi-calendar-check-outline', color: '#059669' },
+  { title: 'Pending Leaves',  value: '1',  subtitle: 'Awaiting approval', icon: 'mdi-calendar-clock-outline', color: '#D97706' },
+  { title: 'Open Positions',  value: '2',  subtitle: 'Active job postings', icon: 'mdi-briefcase-outline',   color: '#DC2626' },
 ]
 
-const activities = [
-  { id: 1, title: 'New Employee Onboarded', desc: 'Thein Thein joined Engineering team', time: '2 hours ago', color: 'success' },
-  { id: 2, title: 'Payroll Processed', desc: 'Monthly salary for February released', time: '5 hours ago', color: 'info' },
-  { id: 3, title: 'Leave Request', desc: 'Michael Chen requested 3 days leave', time: 'Yesterday', color: 'warning' },
-  { id: 4, title: 'Job Posted', desc: 'Senior Frontend Developer opening', time: '2 days ago', color: 'primary' },
+const leaveRequests = [
+  { id: 1, name: 'Emily Rodriguez', type: 'Sick Leave', duration: '2 days', date: 'Jan 22', color: 'purple-lighten-3' },
 ]
+
+const overtimeRequests = [
+  { id: 1, name: 'Sarah Johnson', date: 'Jan 18, 2025', hours: '4 hours', rate: '1.5x rate', color: 'yellow-darken-2' },
+]
+
+const recentApplicants = [
+  { id: 1, name: 'Anna Martinez',  role: 'Full Stack Developer', status: 'Screening', color: 'pink-lighten-2' },
+  { id: 2, name: 'Robert Kim',     role: 'Product Manager',      status: 'New',       color: 'red-lighten-2' },
+  { id: 3, name: 'David Park',     role: 'Full Stack Developer', status: 'Interview', color: 'deep-purple-lighten-2' },
+]
+
+const openPositions = [
+  { id: 1, title: 'Full Stack Developer', dept: 'Engineering', type: 'Full-time', applicants: '12' },
+  { id: 2, title: 'Product Manager',      dept: 'Marketing',   type: 'Full-time', applicants: '8'  },
+]
+
+const getInitials = (name) =>
+  name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'Screening': return 'purple'
+    case 'New':       return 'grey'
+    case 'Interview': return 'blue'
+    default:          return 'grey'
+  }
+}
 </script>
 
 <style scoped>
-.gap-4 { gap: 16px; }
-
-.border-l-4 {
-  border-left-width: 4px !important;
-  border-left-style: solid !important;
+.stat-card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08) !important;
 }
 
-@media (max-width: 600px) {
-  .chart-container .bg-primary {
-    width: 25px !important;
-  }
+.stat-icon-avatar {
+  opacity: 0.92;
 }
+
+.request-row {
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+.request-row:last-child {
+  border-bottom: none;
+}
+
+.gap-3 { gap: 12px; }
 </style>

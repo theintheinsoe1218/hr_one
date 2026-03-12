@@ -131,15 +131,26 @@
           </div>
 
           <div class="mb-5">
-            <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Date</label>
-            <v-text-field
-              type="date"
-              placeholder="mm/dd/yyyy"
-              variant="outlined"
-              hide-details
-              rounded="lg"
-              color="primary"
-            ></v-text-field>
+            <label class="text-subtitle-2 font-weight-bold text-on-surface mb-1 d-block">Date</label>
+            <v-menu v-model="dateMenu" :close-on-content-click="false">
+              <template v-slot:activator="{ props }">
+                <v-text-field
+                  v-bind="props"
+                  v-model="form.date"
+                  placeholder="YYYY-MM-DD"
+                  variant="outlined"
+                  hide-details
+                  rounded="lg"
+                  color="primary"
+                  readonly
+                  prepend-inner-icon="mdi-calendar"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                @update:model-value="(val) => { form.date = val.toISOString().split('T')[0]; dateMenu = false }"
+                color="primary"
+              ></v-date-picker>
+            </v-menu>
           </div>
 
           <v-row class="mb-5">
@@ -195,6 +206,15 @@ import { ref, computed } from 'vue'
 const dialog = ref(false)
 const search = ref('')
 const statusFilter = ref('all')
+const dateMenu = ref(false)
+
+const form = ref({
+  employee: '',
+  date: new Date().toISOString().split('T')[0],
+  hours: '',
+  rate: '1.5x (Regular OT)',
+  reason: ''
+})
 
 const employees = ['James Wilson', 'Sarah Johnson', 'Michael Chen', 'Thein Thein']
 

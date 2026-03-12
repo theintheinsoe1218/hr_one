@@ -401,8 +401,25 @@
               ></v-select>
             </v-col>
             <v-col cols="6">
-              <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Closing Date</label>
-              <v-text-field type="date" variant="outlined" hide-details rounded="lg"></v-text-field>
+              <label class="text-subtitle-2 font-weight-bold mb-1 d-block text-on-surface">Closing Date</label>
+              <v-menu v-model="closingDateMenu" :close-on-content-click="false">
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    v-model="jobForm.closingDate"
+                    placeholder="YYYY-MM-DD"
+                    variant="outlined"
+                    hide-details
+                    rounded="lg"
+                    readonly
+                    prepend-inner-icon="mdi-calendar"
+                  ></v-text-field>
+                </template>
+                <v-date-picker
+                  @update:model-value="(val) => { jobForm.closingDate = val.toISOString().split('T')[0]; closingDateMenu = false }"
+                  color="primary"
+                ></v-date-picker>
+              </v-menu>
             </v-col>
           </v-row>
         </v-card-text>
@@ -427,6 +444,20 @@ const addApplicantDialog = ref(false)
 const postJobDialog = ref(false)
 const draggedApplicant = ref(null)
 const dragTargetStage = ref(null)
+const closingDateMenu = ref(false)
+
+const jobForm = ref({
+  title: '',
+  department: '',
+  type: 'Full-time',
+  location: '',
+  minSalary: '',
+  maxSalary: '',
+  description: '',
+  requirements: '',
+  status: 'Draft',
+  closingDate: ''
+})
 
 const recruitmentStages = ['Sourced', 'Screening', 'Interview', 'Offer', 'Onboarding', 'Rejected']
 

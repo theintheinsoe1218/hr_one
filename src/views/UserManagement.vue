@@ -105,14 +105,14 @@
     </v-card>
 
     <!-- Add/Edit User Dialog -->
-    <v-dialog v-model="userDialog" max-width="600px" persistent>
-      <v-card class="rounded-xl border-light overflow-hidden shadow-xl">
-        <v-card-title class="d-flex align-center justify-space-between pa-6 border-b-light">
+    <v-dialog v-model="userDialog" max-width="600px" persistent scrollable>
+      <v-card class="rounded-xl shadow-xl d-flex flex-column" style="max-height: 90vh;">
+        <v-card-title class="d-flex align-center justify-space-between pa-6 border-b-light flex-shrink-0">
           <span class="text-h6 font-weight-bold text-on-surface">{{ isEditing ? 'Edit Account' : 'Create New Account' }}</span>
           <v-btn icon="mdi-close" variant="text" size="small" @click="userDialog = false"></v-btn>
         </v-card-title>
         
-        <v-card-text class="pa-6">
+        <v-card-text class="pa-6 overflow-y-auto flex-grow-1">
           <v-alert v-if="errorMsg" type="error" variant="tonal" class="mb-4 rounded-lg" closable>
             {{ errorMsg }}
           </v-alert>
@@ -166,7 +166,7 @@
           </v-row>
         </v-card-text>
 
-        <v-card-actions class="pa-6 border-t-light">
+        <v-card-actions class="pa-6 border-t-light flex-shrink-0">
           <v-spacer></v-spacer>
           <v-btn variant="outlined" rounded="lg" class="px-6 text-none border-grey" @click="userDialog = false">Cancel</v-btn>
           <v-btn 

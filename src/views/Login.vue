@@ -1,10 +1,10 @@
 <template>
-  <v-container fluid class="fill-height bg-grey-lighten-4">
-    <v-row align="center" justify="center">
+  <v-container fluid class="fill-height bg-grey-lighten-4" style="min-height: 100vh">
+    <v-row align="center" justify="center" class="fill-height">
       <v-col cols="12" sm="8" md="6" lg="4">
         <v-card class="elevation-12 rounded-xl" pa-6>
           <v-card-title class="text-h4 font-weight-bold text-center mt-6 text-primary">
-            HRMS Pro
+            Aura HR
           </v-card-title>
           <v-card-subtitle class="text-center mb-6">
             Sign in to access your dashboard
@@ -70,9 +70,9 @@
               </v-btn>
             </v-form>
             
-            <div class="text-center mt-6 text-body-2 text-grey-darken-1">
+            <!-- <div class="text-center mt-6 text-body-2 text-grey-darken-1">
               Demo Credentials: user: <strong>admin@synergy.com</strong> | password: <strong>password</strong>
-            </div>
+            </div> -->
           </v-card-text>
         </v-card>
       </v-col>

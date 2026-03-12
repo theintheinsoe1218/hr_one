@@ -4,11 +4,13 @@ import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 
+const savedTheme = localStorage.getItem('hrms-theme') || 'light'
+
 export default createVuetify({
     components,
     directives,
     theme: {
-        defaultTheme: 'light',
+        defaultTheme: savedTheme,
         themes: {
             light: {
                 dark: false,

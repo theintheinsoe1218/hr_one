@@ -4,24 +4,41 @@
     <v-navigation-drawer 
       v-model="drawer" 
       :rail="rail && $vuetify.display.lgAndUp"
+      :rail-width="67"
       :permanent="$vuetify.display.lgAndUp"
       :temporary="$vuetify.display.mdAndDown"
-      @click="rail = false" 
       color="surface" 
       elevation="2" 
       class="d-flex flex-column"
     >
       <!-- Fixed Header -->
-      <div class="d-flex align-center pa-2 flex-shrink-0" :class="(rail && $vuetify.display.lgAndUp) ? 'justify-center' : 'pa-4'">
-        <v-avatar color="primary" rounded size="40" :class="(rail && $vuetify.display.lgAndUp) ? 'mr-0' : 'mr-3'">
-          <span class="text-white font-weight-bold">HR</span>
-        </v-avatar>
-        <div v-show="!(rail && $vuetify.display.lgAndUp)" class="lh-tight">
-          <div class="font-weight-bold text-h6 text-grey-darken-4">HRMS Pro</div>
-          <div class="text-caption text-grey-darken-1 font-weight-medium">Human Resources</div>
-        </div>
-        <v-spacer v-show="!(rail && $vuetify.display.lgAndUp)"></v-spacer>
-        <v-btn v-show="!(rail && $vuetify.display.lgAndUp) && $vuetify.display.lgAndUp" icon="mdi-chevron-left" variant="text" density="comfortable" @click.stop="rail = !rail"></v-btn>
+      <div class="d-flex align-center flex-shrink-0"
+           :class="(rail && $vuetify.display.lgAndUp) ? 'justify-center pa-3' : 'pa-4'"
+      >
+        <!-- Rail mode: HR avatar as toggle -->
+        <template v-if="rail && $vuetify.display.lgAndUp">
+          <v-avatar
+            color="primary"
+            rounded
+            size="40"
+            class="cursor-pointer"
+            @click.stop="rail = false"
+          >
+            <span class="text-white font-weight-bold">HR</span>
+          </v-avatar>
+        </template>
+
+        <!-- Expanded mode: logo + title + collapse button -->
+        <template v-else>
+          <v-avatar color="primary" rounded size="40" class="mr-3">
+            <span class="text-white font-weight-bold">HR</span>
+          </v-avatar>
+          <div class="lh-tight flex-grow-1">
+            <div class="font-weight-bold text-h6 text-on-surface">Aura HR</div>
+            <div class="text-caption text-medium-emphasis font-weight-medium">Human Resources</div>
+          </div>
+          <v-btn v-if="$vuetify.display.lgAndUp" icon="mdi-chevron-left" variant="text" density="comfortable" @click.stop="rail = true"></v-btn>
+        </template>
       </div>
       
       <v-divider class="flex-shrink-0"></v-divider>
@@ -29,15 +46,27 @@
       <!-- Scrollable Menu -->
       <div class="flex-grow-1 overflow-y-auto custom-scrollbar">
         <v-list density="comfortable" nav class="px-3 mt-4" :class="(rail && $vuetify.display.lgAndUp) ? 'px-1' : 'px-3'">
-          <v-list-item v-for="item in menuItems" :key="item.value"
-            :prepend-icon="item.icon" 
-            :title="item.title" 
-            :value="item.value" 
-            :to="item.to"
-            class="mb-1 rounded-lg"
-            :class="(rail && $vuetify.display.lgAndUp) ? 'px-2' : 'px-4'" 
-            active-class="bg-primary text-white shadow-item"
-          ></v-list-item>
+          <v-tooltip 
+            v-for="item in menuItems" 
+            :key="item.value"
+            :disabled="!rail || !$vuetify.display.lgAndUp"
+            location="right"
+            offset="10"
+          >
+            <template v-slot:activator="{ props }">
+              <v-list-item
+                v-bind="props"
+                :prepend-icon="item.icon" 
+                :title="item.title" 
+                :value="item.value" 
+                :to="item.to"
+                class="mb-1 rounded-lg"
+                :class="(rail && $vuetify.display.lgAndUp) ? 'px-2' : 'px-4'" 
+                active-class="bg-primary text-white shadow-item"
+              ></v-list-item>
+            </template>
+            <span>{{ item.title }}</span>
+          </v-tooltip>
         </v-list>
       </div>
     </v-navigation-drawer>
@@ -77,7 +106,7 @@
           >
           </v-list-item>
           <v-divider class="my-2"></v-divider>
-          <v-list-item prepend-icon="mdi-account-outline" title="My Profile" value="profile"></v-list-item>
+          <v-list-item prepend-icon="mdi-account-outline" title="My Profile" value="profile" to="/profile"></v-list-item>
           <v-list-item prepend-icon="mdi-cog-outline" title="Settings" value="settings"></v-list-item>
           <v-divider class="my-2"></v-divider>
           <v-list-item prepend-icon="mdi-logout" title="Logout" value="logout" color="error" @click="logout"></v-list-item>
@@ -119,7 +148,6 @@ const menuItems = [
   { title: 'Overtime', icon: 'mdi-clock-time-four-outline', value: 'overtime', to: { name: 'overtime' } },
   { title: 'Payroll', icon: 'mdi-cash-multiple', value: 'payroll', to: { name: 'payroll' } },
   { title: 'Performance', icon: 'mdi-star-outline', value: 'performance', to: { name: 'performance' } },
-  { title: 'My Reviews', icon: 'mdi-account-star-outline', value: 'reviews', to: { name: 'reviews' } },
   { title: 'Recruitment', icon: 'mdi-briefcase-outline', value: 'recruitment', to: { name: 'recruitment' } },
   { title: 'User Management', icon: 'mdi-shield-account-outline', value: 'user-management', to: { name: 'user-management' } },
 ]
@@ -129,7 +157,9 @@ const pageTitle = computed(() => {
 })
 
 const toggleTheme = () => {
-  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+  const newTheme = theme.global.current.value.dark ? 'light' : 'dark'
+  theme.global.name.value = newTheme
+  localStorage.setItem('hrms-theme', newTheme)
 }
 
 const logout = () => {

@@ -159,7 +159,7 @@
                 <span class="text-white font-weight-black text-h6">HR</span>
               </v-card>
               <div>
-                <div class="text-h5 font-weight-black text-grey-darken-4">HRMS Pro</div>
+                <div class="text-h5 font-weight-black text-grey-darken-4">Aura HR</div>
                 <div class="text-caption text-grey-darken-1 font-weight-medium">Human Resources Management</div>
               </div>
             </div>
@@ -281,14 +281,25 @@
 
           <v-row class="mb-4">
             <v-col cols="6">
-              <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Pay Period</label>
-              <v-text-field
-                placeholder="March 2026"
-                append-inner-icon="mdi-calendar"
-                variant="outlined"
-                hide-details
-                rounded="lg"
-              ></v-text-field>
+              <label class="text-subtitle-2 font-weight-bold mb-1 d-block text-on-surface">Pay Period</label>
+              <v-menu v-model="periodMenu" :close-on-content-click="false">
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    v-model="payrollForm.period"
+                    placeholder="YYYY-MM"
+                    append-inner-icon="mdi-calendar"
+                    variant="outlined"
+                    hide-details
+                    rounded="lg"
+                    readonly
+                  ></v-text-field>
+                </template>
+                <v-date-picker
+                  @update:model-value="(val) => { payrollForm.period = val.toISOString().substring(0, 7); periodMenu = false }"
+                  color="primary"
+                ></v-date-picker>
+              </v-menu>
             </v-col>
             <v-col cols="6">
               <label class="text-subtitle-2 font-weight-bold mb-1 d-block">Payment Method</label>
@@ -417,6 +428,13 @@ const search = ref('')
 const selectedMonth = ref('March 2026')
 const selectedEmps = ref([])
 const activePayRecord = ref(null)
+const periodMenu = ref(false)
+
+const payrollForm = ref({
+  employee: '',
+  period: new Date().toISOString().substring(0, 7),
+  method: 'Bank Transfer'
+})
 
 const months = ['March 2026', 'February 2026', 'January 2026']
 const employeesList = ['Thein Thein', 'Emily Rodriguez', 'Michael Chen', 'Sarah Johnson']
@@ -587,7 +605,7 @@ const printPayslip = () => {
         #payslip-content { padding: 20px; border: none; }
       }
     </style>`
-  printWindow.document.write('<html><head><title>HRMS Pro - Payslip</title>' + style + '</head><body>')
+  printWindow.document.write('<html><head><title>Aura HR - Payslip</title>' + style + '</head><body>')
   printWindow.document.write(content.innerHTML)
   printWindow.document.write('</body></html>')
   printWindow.document.close()

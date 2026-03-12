@@ -102,26 +102,48 @@
 
           <v-row class="mb-5">
             <v-col cols="6">
-              <label class="text-subtitle-2 font-weight-bold text-grey-darken-3 mb-2 d-block">Start Date</label>
-              <v-text-field
-                v-model="form.startDate"
-                type="date"
-                variant="outlined"
-                hide-details
-                rounded="lg"
-                color="primary"
-              ></v-text-field>
+              <label class="text-subtitle-2 font-weight-bold text-on-surface mb-2 d-block">Start Date</label>
+              <v-menu v-model="startDateMenu" :close-on-content-click="false">
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    v-model="form.startDate"
+                    placeholder="YYYY-MM-DD"
+                    variant="outlined"
+                    hide-details
+                    rounded="lg"
+                    color="primary"
+                    readonly
+                    prepend-inner-icon="mdi-calendar"
+                  ></v-text-field>
+                </template>
+                <v-date-picker
+                  @update:model-value="(val) => { form.startDate = val.toISOString().split('T')[0]; startDateMenu = false }"
+                  color="primary"
+                ></v-date-picker>
+              </v-menu>
             </v-col>
             <v-col cols="6">
-              <label class="text-subtitle-2 font-weight-bold text-grey-darken-3 mb-2 d-block">End Date</label>
-              <v-text-field
-                v-model="form.endDate"
-                type="date"
-                variant="outlined"
-                hide-details
-                rounded="lg"
-                color="primary"
-              ></v-text-field>
+              <label class="text-subtitle-2 font-weight-bold text-on-surface mb-2 d-block">End Date</label>
+              <v-menu v-model="endDateMenu" :close-on-content-click="false">
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    v-model="form.endDate"
+                    placeholder="YYYY-MM-DD"
+                    variant="outlined"
+                    hide-details
+                    rounded="lg"
+                    color="primary"
+                    readonly
+                    prepend-inner-icon="mdi-calendar"
+                  ></v-text-field>
+                </template>
+                <v-date-picker
+                  @update:model-value="(val) => { form.endDate = val.toISOString().split('T')[0]; endDateMenu = false }"
+                  color="primary"
+                ></v-date-picker>
+              </v-menu>
             </v-col>
           </v-row>
 
@@ -159,6 +181,8 @@ const dialog = ref(false)
 const statusFilter = ref('all')
 const submitting = ref(false)
 const formError = ref('')
+const startDateMenu = ref(false)
+const endDateMenu = ref(false)
 
 const form = ref({
   employee: null,
