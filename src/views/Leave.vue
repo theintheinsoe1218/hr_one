@@ -175,7 +175,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getEmployees } from '../services/employeeService'
+import { getLeaves, createLeave, updateLeaveStatus } from '../services/leaveService'
 
 const dialog = ref(false)
 const statusFilter = ref('all')
@@ -192,8 +194,43 @@ const form = ref({
   reason: ''
 })
 
-const employees = ['Thein Thein', 'Emily Rodriguez', 'Michael Chen', 'Lisa Thompson', 'Sarah Johnson']
+const employeesRaw = ref([])
+const employees = computed(() => employeesRaw.value.map(e => e.name))
 const leaveTypeOptions = ['Annual Leave', 'Sick Leave', 'Casual Leave', 'Maternity/Paternity Leave', 'Emergency Leave']
+
+const requestsRaw = ref([])
+
+const loadData = async () => {
+  try {
+    const empRes = await getEmployees()
+    employeesRaw.value = empRes.data.map(e => ({
+      ...e,
+      name: `${e.firstName} ${e.lastName}`
+    }))
+
+    const leavesRes = await getLeaves(statusFilter.value === 'all' ? null : statusFilter.value)
+    requestsRaw.value = leavesRes.data
+  } catch (err) {
+    console.error('Error loading leaves data', err)
+  }
+}
+
+onMounted(() => {
+  loadData()
+})
+
+const requests = computed(() => {
+  return requestsRaw.value.map(r => ({
+    id: r.id,
+    employee: r.employee ? `${r.employee.firstName} ${r.employee.lastName}` : 'Unknown',
+    type: r.type,
+    startDate: r.startDate,
+    endDate: r.endDate,
+    days: r.days,
+    reason: r.reason,
+    status: r.status
+  }))
+})
 
 const leaveStats = computed(() => {
   return [
@@ -213,14 +250,6 @@ const headers = [
   { title: 'Status', key: 'status', align: 'center' },
   { title: 'Actions', key: 'actions', align: 'end', sortable: false },
 ]
-
-const requests = ref([
-  { id: 1, employee: 'Thein Thein', type: 'Annual Leave', startDate: 'Mar 15, 2026', endDate: 'Mar 17, 2026', days: 3, reason: 'Family Vacation', status: 'Pending' },
-  { id: 2, employee: 'Emily Rodriguez', type: 'Sick Leave', startDate: 'Feb 20, 2026', endDate: 'Feb 20, 2026', days: 1, reason: 'Fever', status: 'Approved' },
-  { id: 3, employee: 'Michael Chen', type: 'Casual Leave', startDate: 'Apr 05, 2026', endDate: 'Apr 06, 2026', days: 2, reason: 'Personal work', status: 'Pending' },
-  { id: 4, employee: 'Lisa Thompson', type: 'Emergency Leave', startDate: 'Mar 01, 2026', endDate: 'Mar 03, 2026', days: 3, reason: 'Family emergency', status: 'Approved' },
-  { id: 5, employee: 'Sarah Johnson', type: 'Annual Leave', startDate: 'Mar 25, 2026', endDate: 'Mar 26, 2026', days: 2, reason: 'Rest & Recovery', status: 'Rejected' },
-])
 
 const filteredRequests = computed(() => {
   if (statusFilter.value === 'all') return requests.value
@@ -242,8 +271,13 @@ const getTypeColor = (type) => {
   return 'info'
 }
 
-const updateStatus = (item, status) => {
-  item.status = status
+const updateStatus = async (item, status) => {
+  try {
+    await updateLeaveStatus(item.id, status)
+    await loadData()
+  } catch (err) {
+    console.error('Error updating status', err)
+  }
 }
 
 const submitRequest = async () => {
@@ -252,24 +286,33 @@ const submitRequest = async () => {
     return
   }
   submitting.value = true
-  await new Promise(resolve => setTimeout(resolve, 800))
 
   const start = new Date(form.value.startDate)
   const end = new Date(form.value.endDate)
   const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1
+  
+  const empObj = employeesRaw.value.find(e => e.name === form.value.employee)
 
-  requests.value.unshift({
-    id: Date.now(),
-    employee: form.value.employee,
+  const payload = {
+    employee: empObj,
     type: form.value.leaveType,
-    startDate: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    endDate: end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    startDate: form.value.startDate,
+    endDate: form.value.endDate,
     days: days > 0 ? days : 1,
     reason: form.value.reason || '-',
     status: 'Pending'
-  })
-  submitting.value = false
-  closeDialog()
+  }
+
+  try {
+    await createLeave(payload)
+    await loadData()
+    closeDialog()
+  } catch (err) {
+    formError.value = 'Failed to submit request.'
+    console.error(err)
+  } finally {
+    submitting.value = false
+  }
 }
 
 const closeDialog = () => {

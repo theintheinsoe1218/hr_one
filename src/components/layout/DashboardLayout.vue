@@ -158,7 +158,7 @@ const pageTitle = computed(() => {
 
 const toggleTheme = () => {
   const newTheme = theme.global.current.value.dark ? 'light' : 'dark'
-  theme.global.name.value = newTheme
+  theme.change(newTheme)
   localStorage.setItem('hrms-theme', newTheme)
 }
 

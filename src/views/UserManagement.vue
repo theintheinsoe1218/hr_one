@@ -52,7 +52,7 @@
 
         <v-select
           v-model="roleFilter"
-          :items="['All Roles', 'Super Admin', 'Admin', 'HR Manager', 'Employee']"
+          :items="rolesList"
           placeholder="Filter by Role"
           density="comfortable"
           variant="outlined"
@@ -134,7 +134,7 @@
               <label class="text-subtitle-2 font-weight-bold mb-1 d-block text-on-surface">Role</label>
               <v-select
                 v-model="form.role"
-                :items="['Super Admin', 'Admin', 'HR Manager', 'Employee']"
+                :items="formRoles"
                 placeholder="Select role"
                 variant="outlined"
                 hide-details
@@ -198,7 +198,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getUsers, createUser, updateUser, deleteUser as deleteUserApi, getRoles } from '../services/userService'
 
 const search = ref('')
 const roleFilter = ref('All Roles')
@@ -209,6 +210,7 @@ const errorMsg = ref('')
 const userToDelete = ref(null)
 
 const form = ref({
+  id: null,
   name: '',
   email: '',
   role: 'Employee',
@@ -217,12 +219,34 @@ const form = ref({
   password: ''
 })
 
-const users = ref([
-  { id: 1, name: 'Admin User', email: 'admin@synergy.com', role: 'Super Admin', employeeId: 'SYS-001', status: 'Active', avatar: 'https://i.pravatar.cc/150?u=1' },
-  { id: 2, name: 'Thein Thein', email: 'theinthein@synergy.com', role: 'HR Manager', employeeId: 'EMP-005', status: 'Active', avatar: 'https://i.pravatar.cc/150?u=2' },
-  { id: 3, name: 'Michael Chen', email: 'michael@synergy.com', role: 'Admin', employeeId: 'EMP-002', status: 'Active', avatar: 'https://i.pravatar.cc/150?u=3' },
-  { id: 4, name: 'Sarah Johnson', email: 'sarah@synergy.com', role: 'Employee', employeeId: 'EMP-001', status: 'Disabled', avatar: 'https://i.pravatar.cc/150?u=4' },
-])
+const users = ref([])
+const rolesListRaw = ref([])
+const rolesList = computed(() => ['All Roles', ...rolesListRaw.value.map(r => r.name)])
+const formRoles = computed(() => rolesListRaw.value.map(r => r.name))
+
+const loadData = async () => {
+  try {
+    const rolesRes = await getRoles()
+    rolesListRaw.value = rolesRes.data
+    
+    const usersRes = await getUsers()
+    users.value = usersRes.data.map(u => ({
+      id: u.id,
+      name: u.employee ? `${u.employee.firstName} ${u.employee.lastName}` : u.username,
+      email: u.username,
+      role: u.role ? u.role.name : 'Unknown',
+      employeeId: u.employee ? u.employee.id : 'N/A',
+      status: 'Active',
+      avatar: `https://i.pravatar.cc/150?u=${u.id}`
+    }))
+  } catch (err) {
+    console.error('Error loading users data', err)
+  }
+}
+
+onMounted(() => {
+  loadData()
+})
 
 const headers = [
   { title: 'User Account', key: 'user' },
@@ -235,7 +259,7 @@ const headers = [
 const userStats = computed(() => {
   return [
     { label: 'Total Users', value: users.value.length, icon: 'mdi-account-group-outline', color: 'primary' },
-    { label: 'Admins', value: users.value.filter(u => u.role.includes('Admin')).length, icon: 'mdi-shield-check-outline', color: 'indigo' },
+    { label: 'Admins', value: users.value.filter(u => u.role && u.role.includes('Admin')).length, icon: 'mdi-shield-check-outline', color: 'indigo' },
     { label: 'HR Managers', value: users.value.filter(u => u.role === 'HR Manager').length, icon: 'mdi-account-tie-outline', color: 'deep-purple' },
     { label: 'Active Sessions', value: '2', icon: 'mdi-web-clock', color: 'success' },
   ]
@@ -250,6 +274,7 @@ const filteredUsers = computed(() => {
 })
 
 const getInitials = (name) => {
+  if (!name) return ''
   return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
 }
 
@@ -264,33 +289,42 @@ const getRoleColor = (role) => {
 
 const openAddDialog = () => {
   isEditing.value = false
-  form.value = { name: '', email: '', role: 'Employee', employeeId: '', status: 'Active', password: '' }
+  form.value = { id: null, name: '', email: '', role: rolesListRaw.value[0]?.name || 'Employee', employeeId: '', status: 'Active', password: '' }
   userDialog.value = true
 }
 
 const editUser = (user) => {
   isEditing.value = true
-  form.value = { ...user }
+  form.value = { ...user, password: '' }
   userDialog.value = true
 }
 
-const saveUser = () => {
-  if (!form.value.name || !form.value.email) {
-    errorMsg.value = 'Name and Email are required'
+const saveUser = async () => {
+  if (!form.value.email) {
+    errorMsg.value = 'Email is required'
     return
   }
   
-  if (isEditing.value) {
-    const index = users.value.findIndex(u => u.id === form.value.id)
-    if (index !== -1) users.value[index] = { ...form.value }
-  } else {
-    users.value.push({
-      id: Date.now(),
-      ...form.value,
-      avatar: `https://i.pravatar.cc/150?u=${Date.now()}`
-    })
+  const roleObj = rolesListRaw.value.find(r => r.name === form.value.role)
+  const payload = {
+    username: form.value.email,
+    password: form.value.password || undefined,
+    role: roleObj
   }
-  userDialog.value = false
+  
+  try {
+    if (isEditing.value) {
+      await updateUser(form.value.id, payload)
+    } else {
+      if (!payload.password) payload.password = 'password'
+      await createUser(payload)
+    }
+    await loadData()
+    userDialog.value = false
+  } catch (err) {
+    errorMsg.value = 'Error saving user'
+    console.error('Error saving user:', err)
+  }
 }
 
 const confirmDelete = (user) => {
@@ -298,10 +332,15 @@ const confirmDelete = (user) => {
   deleteDialog.value = true
 }
 
-const deleteUser = () => {
-  users.value = users.value.filter(u => u.id !== userToDelete.value.id)
-  deleteDialog.value = false
-  userToDelete.value = null
+const deleteUser = async () => {
+  try {
+    await deleteUserApi(userToDelete.value.id)
+    await loadData()
+    deleteDialog.value = false
+    userToDelete.value = null
+  } catch (err) {
+    console.error('Error deleting user:', err)
+  }
 }
 </script>
 

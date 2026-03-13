@@ -10,6 +10,11 @@ const router = createRouter({
             component: () => import('../views/Login.vue')
         },
         {
+            path: '/forgot-password',
+            name: 'forgot-password',
+            component: () => import('../views/ForgotPassword.vue')
+        },
+        {
             path: '/',
             name: 'home',
             redirect: '/dashboard'
@@ -81,6 +86,8 @@ router.beforeEach((to, from, next) => {
     const authStore = useAuthStore()
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
         next('/login')
+    } else if (to.path === '/login' && authStore.isAuthenticated) {
+        next('/dashboard')
     } else {
         next()
     }

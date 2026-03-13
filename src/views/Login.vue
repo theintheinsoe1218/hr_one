@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="fill-height bg-grey-lighten-4" style="min-height: 100vh">
+  <v-container fluid class="fill-height bg-background" style="min-height: 100vh">
     <v-row align="center" justify="center" class="fill-height">
       <v-col cols="12" sm="8" md="6" lg="4">
         <v-card class="elevation-12 rounded-xl" pa-6>
@@ -24,12 +24,12 @@
 
             <v-form @submit.prevent="handleLogin" ref="form">
               <v-text-field
-                v-model="email"
-                label="Email Address"
-                prepend-inner-icon="mdi-email"
+                v-model="username"
+                label="Username"
+                prepend-inner-icon="mdi-account"
                 variant="outlined"
                 color="primary"
-                :rules="[v => !!v || 'Email is required']"
+                :rules="[v => !!v || 'Username is required']"
                 required
               ></v-text-field>
 
@@ -55,7 +55,7 @@
                   color="primary"
                   density="compact"
                 ></v-checkbox>
-                <a href="#" class="text-primary text-decoration-none text-body-2">Forgot password?</a>
+                <router-link to="/forgot-password" class="text-primary text-decoration-none text-body-2">Forgot password?</router-link>
               </div>
 
               <v-btn
@@ -71,7 +71,7 @@
             </v-form>
             
             <!-- <div class="text-center mt-6 text-body-2 text-grey-darken-1">
-              Demo Credentials: user: <strong>admin@synergy.com</strong> | password: <strong>password</strong>
+              Demo Credentials: user: <strong>admin</strong> | password: <strong>admin123</strong>
             </div> -->
           </v-card-text>
         </v-card>
@@ -81,28 +81,46 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const email = ref('admin@synergy.com')
-const password = ref('password')
+const username = ref('')
+const password = ref('')
 const showPassword = ref(false)
-const remember = ref(false)
+const remember = ref(true)
 const loading = ref(false)
 const errorMsg = ref('')
 
+// Restore saved username if "Remember me" was checked previously
+onMounted(() => {
+  const savedUsername = localStorage.getItem('rememberedUsername')
+  const wasRemembered = localStorage.getItem('rememberMe') === 'true'
+  if (savedUsername && wasRemembered) {
+    username.value = savedUsername
+    remember.value = true
+  }
+})
+
 const handleLogin = async () => {
-  if (!email.value || !password.value) return;
+  if (!username.value || !password.value) return;
   
   loading.value = true
   errorMsg.value = ''
   
   try {
-    await authStore.login(email.value, password.value)
+    await authStore.login(username.value, password.value, remember.value)
+
+    // Save or clear username based on remember me
+    if (remember.value) {
+      localStorage.setItem('rememberedUsername', username.value)
+    } else {
+      localStorage.removeItem('rememberedUsername')
+    }
+
     router.push('/dashboard')
   } catch (error) {
     errorMsg.value = error.message || 'Login failed. Please check your credentials.'

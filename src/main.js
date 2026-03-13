@@ -11,8 +11,12 @@ app.use(pinia)
 app.use(router)
 app.use(vuetify)
 
-app.mount('#app')
-
-// Initialize auth state
+// Initialize auth state BEFORE router resolves
 import { useAuthStore } from './store/auth'
 useAuthStore(pinia).initialize()
+
+// Wait for the initial navigation (and all guards) to complete
+// before mounting — this prevents ANY flash of authenticated content
+router.isReady().then(() => {
+    app.mount('#app')
+})

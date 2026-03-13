@@ -11,12 +11,20 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from './store/auth'
 import DashboardLayout from './components/layout/DashboardLayout.vue'
 
 const route = useRoute()
+const authStore = useAuthStore()
+
+// Public routes that use plain layout (no sidebar)
+const publicRoutes = ['login', 'forgot-password']
 
 const layout = computed(() => {
-  if (route.name === 'login') return 'div'
+  // If not authenticated, or explicitly on a public route, use empty layout
+  if (!authStore.isAuthenticated || publicRoutes.includes(route.name)) {
+    return 'div'
+  }
   return DashboardLayout
 })
 </script>

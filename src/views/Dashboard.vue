@@ -137,25 +137,59 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { getDashboardEmployees, getDashboardLeaves } from '../services/dashboardService'
 
 const todayText = computed(() => {
   return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 })
 
-const stats = [
-  { title: 'Total Employees', value: '5',  subtitle: '6 total',           icon: 'mdi-account-group-outline', color: '#7C3AED' },
-  { title: 'Present Today',   value: '0',  subtitle: 'of 5 active',       icon: 'mdi-calendar-check-outline', color: '#059669' },
-  { title: 'Pending Leaves',  value: '1',  subtitle: 'Awaiting approval', icon: 'mdi-calendar-clock-outline', color: '#D97706' },
+const totalEmployees = ref(0)
+const activeEmployees = ref(0)
+const totalLeaves = ref(0)
+const pendingLeavesCount = ref(0)
+const leaveRequestsRaw = ref([])
+
+onMounted(async () => {
+  try {
+    const empRes = await getDashboardEmployees()
+    totalEmployees.value = empRes.data.length
+    activeEmployees.value = empRes.data.length // assuming all are active for now
+
+    const leavesRes = await getDashboardLeaves('Pending')
+    leaveRequestsRaw.value = leavesRes.data
+    pendingLeavesCount.value = leavesRes.data.length
+
+    // Just count total leaves for interest length
+    const allLeavesRes = await getDashboardLeaves()
+    totalLeaves.value = allLeavesRes.data.length
+
+  } catch (err) {
+    console.error('Error fetching dashboard data', err)
+  }
+})
+
+const stats = computed(() => [
+  { title: 'Total Employees', value: totalEmployees.value.toString(),  subtitle: `${totalEmployees.value} total`, icon: 'mdi-account-group-outline', color: '#7C3AED' },
+  { title: 'Present Today',   value: activeEmployees.value.toString(),  subtitle: `of ${activeEmployees.value} active`, icon: 'mdi-calendar-check-outline', color: '#059669' },
+  { title: 'Pending Leaves',  value: pendingLeavesCount.value.toString(),  subtitle: 'Awaiting approval', icon: 'mdi-calendar-clock-outline', color: '#D97706' },
   { title: 'Open Positions',  value: '2',  subtitle: 'Active job postings', icon: 'mdi-briefcase-outline',   color: '#DC2626' },
-]
+])
 
-const leaveRequests = [
-  { id: 1, name: 'Emily Rodriguez', type: 'Sick Leave', duration: '2 days', date: 'Jan 22', color: 'purple-lighten-3' },
-]
+const leaveRequests = computed(() => {
+  return leaveRequestsRaw.value.slice(0, 3).map(r => ({
+    id: r.id,
+    name: r.employee ? `${r.employee.firstName} ${r.employee.lastName}` : 'Unknown',
+    type: r.type,
+    duration: `${r.days} days`,
+    date: r.startDate,
+    color: 'purple-lighten-3'
+  }))
+})
 
+// Mock Data for currently unavailable backend features
 const overtimeRequests = [
-  { id: 1, name: 'Sarah Johnson', date: 'Jan 18, 2025', hours: '4 hours', rate: '1.5x rate', color: 'yellow-darken-2' },
+  { id: 1, name: 'Sarah Johnson', date: 'Jan 18, 2026', hours: '4 hours', rate: '1.5x rate', color: 'yellow-darken-2' },
 ]
 
 const recentApplicants = [
@@ -169,8 +203,10 @@ const openPositions = [
   { id: 2, title: 'Product Manager',      dept: 'Marketing',   type: 'Full-time', applicants: '8'  },
 ]
 
-const getInitials = (name) =>
-  name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+const getInitials = (name) => {
+  if (!name) return ''
+  return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+}
 
 const getStatusColor = (status) => {
   switch (status) {

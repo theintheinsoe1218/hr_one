@@ -1,49 +1,60 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import api from '../utils/api'
 import { jwtDecode } from 'jwt-decode'
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        token: localStorage.getItem('token') || null,
+        token: localStorage.getItem('token') || sessionStorage.getItem('token') || null,
         user: null
     }),
     getters: {
         isAuthenticated: (state) => !!state.token
     },
     actions: {
-        async login(email, password) {
-            // In a real app this would call an API
-            // We will mock this response for now
+        async login(username, password, remember = false) {
             try {
-                // Mock API call
-                if (email === 'admin@synergy.com' && password === 'password') {
-                    const mockToken = btoa(JSON.stringify({
-                        alg: "HS256",
-                        typ: "JWT"
-                    })) + "." + btoa(JSON.stringify({
-                        sub: "1234567890",
-                        name: "John Doe",
-                        email: "admin@synergy.com",
-                        role: "Admin",
-                        iat: 1516239022
-                    })) + ".SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                const response = await api.post('/users/login', {
+                    username: username,
+                    password: password
+                });
 
-                    this.token = mockToken;
-                    localStorage.setItem('token', mockToken);
-                    this.parseUserFromToken(mockToken);
+                const token = response.data.token;
+                if (!token) throw new Error('No token received');
 
-                    return true;
+                this.token = token;
+
+                // Remember me: localStorage (persistent) vs sessionStorage (tab-only)
+                if (remember) {
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('rememberMe', 'true');
+                    sessionStorage.removeItem('token');
                 } else {
-                    throw new Error('Invalid credentials');
+                    sessionStorage.setItem('token', token);
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('rememberMe');
                 }
+
+                if (response.data.username) {
+                    this.user = {
+                        name: response.data.username,
+                        role: response.data.role
+                    };
+                } else {
+                    this.parseUserFromToken(token);
+                }
+
+                return true;
             } catch (error) {
-                throw error;
+                console.error('Login error', error);
+                throw new Error(error.response?.data?.message || error.response?.data || 'Invalid credentials');
             }
         },
         logout() {
             this.token = null;
             this.user = null;
             localStorage.removeItem('token');
+            localStorage.removeItem('rememberMe');
+            sessionStorage.removeItem('token');
         },
         parseUserFromToken(token) {
             if (!token) return;

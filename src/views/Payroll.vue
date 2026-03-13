@@ -119,6 +119,7 @@
               <v-select
                 v-model="item.status"
                 :items="['Draft', 'Paid']"
+                @update:model-value="(val) => updatePayrollStatus(item, val)"
                 density="compact"
                 variant="outlined"
                 hide-details
@@ -359,7 +360,7 @@
         <v-card-actions class="pa-4 pt-0">
           <v-spacer></v-spacer>
           <v-btn variant="outlined" rounded="lg" class="px-6 border-grey text-none" @click="addPayrollDialog = false">Cancel</v-btn>
-          <v-btn color="primary" rounded="lg" class="px-6 text-none font-weight-bold shadow-primary ml-2" @click="addPayrollDialog = false">Create Payroll</v-btn>
+          <v-btn color="primary" rounded="lg" class="px-6 text-none font-weight-bold shadow-primary ml-2" @click="createSinglePayroll">Create Payroll</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -419,7 +420,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { getEmployees } from '../services/employeeService'
+import { getPayroll, createPayroll, updatePayrollStatus } from '../services/payrollService'
 
 const addPayrollDialog = ref(false)
 const autoGenDialog = ref(false)
@@ -437,26 +440,63 @@ const payrollForm = ref({
 })
 
 const months = ['March 2026', 'February 2026', 'January 2026']
-const employeesList = ['Thein Thein', 'Emily Rodriguez', 'Michael Chen', 'Sarah Johnson']
 
-const payrollRecords = ref([
-  { 
-    employee: 'Thein Thein', 
-    baseSalary: 500000, 
-    overtime: 1000, 
-    bonuses: 0, 
-    deductions: 181819.58, 
-    netSalary: 319180.42, 
-    status: 'Draft' 
-  },
-])
+const employeesListRaw = ref([])
+const employeesList = computed(() => employeesListRaw.value.map(e => ({ title: `${e.firstName} ${e.lastName}`, value: e })))
 
-const autoGenList = [
-  { name: 'Emily Rodriguez', dept: 'Marketing', salary: 62000 },
-  { name: 'Michael Chen', dept: 'Human Resources', salary: 75000 },
-  { name: 'Sarah Johnson', dept: 'Engineering', salary: 95000 },
-  { name: 'James Wilson', dept: 'Finance', salary: 70000 },
-]
+const payrollRecordsRaw = ref([])
+
+const loadData = async () => {
+  try {
+    const empRes = await getEmployees()
+    employeesListRaw.value = empRes.data
+
+    await loadPayrollRecords()
+  } catch (err) {
+    console.error('Error loading payroll data', err)
+  }
+}
+
+const loadPayrollRecords = async () => {
+  try {
+    const res = await getPayroll(selectedMonth.value)
+    payrollRecordsRaw.value = res.data
+  } catch(err) {
+    console.error('Error loading payroll records', err)
+  }
+}
+
+onMounted(() => {
+  loadData()
+})
+
+watch(selectedMonth, () => {
+  loadPayrollRecords()
+})
+
+const payrollRecords = computed(() => {
+  return payrollRecordsRaw.value.map(p => ({
+    id: p.id,
+    employeeObj: p.employee,
+    employee: p.employee ? `${p.employee.firstName} ${p.employee.lastName}` : 'Unknown',
+    baseSalary: p.baseSalary,
+    overtime: p.overtime,
+    bonuses: p.bonuses,
+    deductions: p.deductions,
+    netSalary: p.netSalary,
+    status: p.status,
+    period: p.period
+  }))
+})
+
+const autoGenList = computed(() => {
+   return employeesListRaw.value.map(e => ({
+     name: `${e.firstName} ${e.lastName}`,
+     dept: e.department ? e.department.name : 'Unknown',
+     salary: e.salary || 0,
+     employeeObj: e
+   }))
+})
 
 const headers = [
   { title: 'Employee', key: 'employee' },
@@ -469,13 +509,20 @@ const headers = [
   { title: 'Actions', key: 'actions', align: 'end', sortable: false },
 ]
 
-const payrollStats = [
-  { label: 'Total Gross', value: '$501,000', icon: 'mdi-currency-usd', color: 'indigo', iconBg: 'indigo-lighten-5' },
-  { label: 'Total Net', value: '$319,180.42', icon: 'mdi-calculator', color: 'success', iconBg: 'success-lighten-5' },
-  { label: 'Paid', value: '0 / 1', icon: 'mdi-file-document-check-outline', color: 'primary', iconBg: 'primary-lighten-5' },
-]
+const payrollStats = computed(() => {
+  const totalGross = payrollRecords.value.reduce((sum, p) => sum + (p.baseSalary + p.overtime + p.bonuses), 0)
+  const totalNet = payrollRecords.value.reduce((sum, p) => sum + p.netSalary, 0)
+  const paidCount = payrollRecords.value.filter(p => p.status === 'Paid').length
+
+  return [
+    { label: 'Total Gross', value: `$${formatNumber(totalGross)}`, icon: 'mdi-currency-usd', color: 'indigo', iconBg: 'indigo-lighten-5' },
+    { label: 'Total Net', value: `$${formatNumber(totalNet)}`, icon: 'mdi-calculator', color: 'success', iconBg: 'success-lighten-5' },
+    { label: 'Paid', value: `${paidCount} / ${payrollRecords.value.length}`, icon: 'mdi-file-document-check-outline', color: 'primary', iconBg: 'primary-lighten-5' },
+  ]
+})
 
 const getInitials = (name) => {
+  if (!name) return ''
   return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
 }
 
@@ -485,28 +532,73 @@ const formatNumber = (num) => {
 }
 
 const selectAllEmps = () => {
-  if (selectedEmps.value.length === autoGenList.length) {
+  if (selectedEmps.value.length === autoGenList.value.length) {
     selectedEmps.value = []
   } else {
-    selectedEmps.value = [...autoGenList]
+    selectedEmps.value = [...autoGenList.value]
   }
 }
 
-const generateSelectedPayrolls = () => {
-  selectedEmps.value.forEach(emp => {
+const updatePayrollStatus = async (item, status) => {
+  try {
+     await updatePayrollStatus(item.id, status)
+  } catch (err) {
+    console.error('Error updating status', err)
+  }
+}
+
+const generateSelectedPayrolls = async () => {
+  for (const emp of selectedEmps.value) {
     const tax = emp.salary * 0.3127
-    payrollRecords.value.push({
-      employee: emp.name,
+    const payload = {
+      employee: emp.employeeObj,
+      period: selectedMonth.value,
       baseSalary: emp.salary,
       overtime: 0,
       bonuses: 0,
       deductions: Number(tax.toFixed(2)),
       netSalary: Number((emp.salary - tax).toFixed(2)),
-      status: 'Draft'
-    })
-  })
+      status: 'Draft',
+      paymentMethod: 'Bank Transfer'
+    }
+    
+    try {
+      await createPayroll(payload)
+    } catch (err) {
+      console.error('Error auto-generating payroll', err)
+    }
+  }
+  
+  await loadPayrollRecords()
   selectedEmps.value = []
   autoGenDialog.value = false
+}
+
+const createSinglePayroll = async () => {
+  if (!payrollForm.value.employee) return
+
+  const emp = payrollForm.value.employee
+  const tax = (emp.salary || 0) * 0.3127
+
+  const payload = {
+    employee: emp,
+    period: payrollForm.value.period,
+    baseSalary: emp.salary || 0,
+    overtime: 0,
+    bonuses: 0,
+    deductions: Number(tax.toFixed(2)),
+    netSalary: Number(((emp.salary || 0) - tax).toFixed(2)),
+    status: 'Draft',
+    paymentMethod: payrollForm.value.method
+  }
+
+  try {
+    await createPayroll(payload)
+    await loadPayrollRecords()
+    addPayrollDialog.value = false
+  } catch (err) {
+    console.error('Error creating single payroll', err)
+  }
 }
 
 const viewPayslip = (item) => {
@@ -518,7 +610,9 @@ const printPayslip = () => {
   const content = document.getElementById('payslip-content')
   if (!content) return
   const printWindow = window.open('', '_blank')
-  const style = `
+  const style = `...omitted for brevity...`
+  // The rest of the print function stays the same but uses local style string actually no, just keep inline or same style string
+  const css = `
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
       body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; color: #1e293b; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -604,8 +698,9 @@ const printPayslip = () => {
         body { padding: 0; -webkit-print-color-adjust: exact; }
         #payslip-content { padding: 20px; border: none; }
       }
-    </style>`
-  printWindow.document.write('<html><head><title>Aura HR - Payslip</title>' + style + '</head><body>')
+    </style>
+  `
+  printWindow.document.write('<html><head><title>Aura HR - Payslip</title>' + css + '</head><body>')
   printWindow.document.write(content.innerHTML)
   printWindow.document.write('</body></html>')
   printWindow.document.close()
@@ -621,9 +716,9 @@ const employeeDetails = computed(() => {
   if (!activePayRecord.value) return {}
   return {
     'Name': activePayRecord.value.employee,
-    'Employee ID': 'EMP003',
-    'Department': 'Marketing',
-    'Position': 'Marketing Specialist'
+    'Employee ID': activePayRecord.value.employeeObj?.id || 'N/A',
+    'Department': activePayRecord.value.employeeObj?.department?.name || 'Unknown',
+    'Position': activePayRecord.value.employeeObj?.position || 'Employee'
   }
 })
 
@@ -660,7 +755,8 @@ const deductionsData = computed(() => {
 
 const totalDeductions = computed(() => activePayRecord.value?.deductions || 0)
 const netSalary = computed(() => grossPay.value - totalDeductions.value)
-const amountInWords = computed(() => 'Forty Two Thousand Six Hundred Ten Dollars')
+// Simplified amount to word formatter placeholder
+const amountInWords = computed(() => 'Amount transferred automatically')
 
 const currentFormattedDate = computed(() => {
   return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })

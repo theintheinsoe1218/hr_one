@@ -462,7 +462,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import {
+  getEmployees, createEmployee, deleteEmployee as deleteEmployeeApi,
+  getDepartments, createDepartment, updateDepartment, deleteDepartment
+} from '../services/employeeService'
 
 // ── Detail Panel ─────────────────────────────────────────
 const detailPanel = ref(false)
@@ -476,9 +480,14 @@ const openDetail = (item) => {
   detailPanel.value = true
 }
 
-const deleteEmployee = (item) => {
-  employeeData.value = employeeData.value.filter(e => e !== item)
-  detailPanel.value = false
+const deleteEmployee = async (item) => {
+  try {
+    await deleteEmployeeApi(item.id)
+    employeeData.value = employeeData.value.filter(e => e.id !== item.id)
+    detailPanel.value = false
+  } catch (error) {
+    console.error('Error deleting employee:', error)
+  }
 }
 
 const addDialog = ref(false)
@@ -502,18 +511,40 @@ const openAddDialog = () => {
   addDialog.value = true
 }
 
-const saveEmployee = () => {
+const saveEmployee = async () => {
   if (!form.value.firstName || !form.value.email) return
-  employeeData.value.push({
+  
+  const deptObj = departmentsListRaw.value.find(d => d.name === form.value.department)
+  
+  const payload = {
     id: form.value.id || `EMP00${employeeData.value.length + 1}`,
-    employee: `${form.value.firstName} ${form.value.lastName}`.trim(),
-    department: form.value.department,
+    firstName: form.value.firstName,
+    lastName: form.value.lastName,
+    email: form.value.email,
+    phone: form.value.phone,
+    address: form.value.address,
+    department: deptObj,
     position: form.value.position,
-    type: form.value.type,
+    employmentType: form.value.type,
     status: form.value.status,
-    hireDate: form.value.hireDate
-  })
-  addDialog.value = false
+    hireDate: form.value.hireDate,
+    salary: parseFloat(form.value.salary) || 0,
+    leaveBalance: parseInt(form.value.leaveBalance) || 0,
+    bankName: form.value.bankName,
+    bankAccount: form.value.bankAccount,
+    taxId: form.value.taxId,
+    emergencyContact: form.value.emergencyContact,
+    emergencyPhone: form.value.emergencyPhone
+  }
+  
+  try {
+    const res = await createEmployee(payload)
+    const newEmp = mapEmployee(res.data)
+    employeeData.value.push(newEmp)
+    addDialog.value = false
+  } catch (err) {
+    console.error('Error saving employee:', err)
+  }
 }
 
 const headers = [
@@ -525,19 +556,21 @@ const headers = [
   { title: 'Hire Date', align: 'start', key: 'hireDate', sortable: true },
 ]
 
-const employeeData = ref([
-  { id: 'EMP001', employee: 'Thein Thein', department: 'Engineering', position: 'Junior Web Developer', type: 'Full-time', status: 'Active', hireDate: '2026-02-05', salary: '1200', leaveBalance: 18 },
-  { id: 'EMP002', employee: 'Emily Rodriguez', department: 'Marketing', position: 'Marketing Specialist', type: 'Full-time', status: 'Active', hireDate: '2023-01-10', salary: '2500', leaveBalance: 15 },
-  { id: 'EMP003', employee: 'Michael Chen', department: 'Human Resources', position: 'HR Manager', type: 'Full-time', status: 'Active', hireDate: '2021-08-01', salary: '3500', leaveBalance: 10 },
-  { id: 'EMP004', employee: 'Lisa Thompson', department: 'Sales', position: 'Sales Representative', type: 'Full-time', status: 'On Leave', hireDate: '2023-04-05', salary: '2200', leaveBalance: 5 },
-  { id: 'EMP005', employee: 'Sarah Johnson', department: 'Engineering', position: 'Senior Software Engineer', type: 'Full-time', status: 'Active', hireDate: '2022-03-15', salary: '4500', leaveBalance: 20 },
-])
+const employeeData = ref([])
 
 const search = ref('')
 const activeMainTab = ref('Employees')
 const departmentFilter = ref('All Departments')
-const departmentsList = ref(['Engineering', 'Marketing', 'Human Resources', 'Sales'])
+const departmentsListRaw = ref([])
+const departmentsList = computed(() => departmentsListRaw.value.map(d => d.name))
 const departments = computed(() => ['All Departments', ...departmentsList.value])
+
+const mapEmployee = (emp) => ({
+  ...emp,
+  employee: `${emp.firstName || ''} ${emp.lastName || ''}`.trim(),
+  department: emp.department ? emp.department.name : 'Unknown',
+  type: emp.employmentType
+})
 
 const filteredEmployees = computed(() => {
   let data = employeeData.value
@@ -547,10 +580,26 @@ const filteredEmployees = computed(() => {
   return data
 })
 
+const loadData = async () => {
+  try {
+    const deptRes = await getDepartments()
+    departmentsListRaw.value = deptRes.data
+    
+    const empRes = await getEmployees()
+    employeeData.value = empRes.data.map(mapEmployee)
+  } catch (error) {
+    console.error('Failed to load data', error)
+  }
+}
+
+onMounted(() => {
+  loadData()
+})
+
 // ── Department CRUD ─────────────────────────────────────
 const deptFormDialog = ref(false)
 const isEditingDept = ref(false)
-const oldDeptName = ref('')
+const oldDept = ref(null)
 const deptForm = ref({ name: '' })
 
 const deptHeaders = [
@@ -560,9 +609,9 @@ const deptHeaders = [
 ]
 
 const departmentsWithStats = computed(() => {
-  return departmentsList.value.map(dept => ({
-    name: dept,
-    employeesCount: employeeData.value.filter(e => e.department === dept).length
+  return departmentsListRaw.value.map(dept => ({
+    ...dept,
+    employeesCount: employeeData.value.filter(e => e.department === dept.name).length
   }))
 })
 
@@ -574,35 +623,49 @@ const openAddDeptDialog = () => {
 
 const openEditDeptDialog = (dept) => {
   isEditingDept.value = true
-  oldDeptName.value = dept.name
+  oldDept.value = dept
   deptForm.value = { name: dept.name }
   deptFormDialog.value = true
 }
 
-const saveDept = () => {
+const saveDept = async () => {
   if (!deptForm.value.name) return
   
-  if (isEditingDept.value) {
-    const index = departmentsList.value.indexOf(oldDeptName.value)
-    if (index !== -1) {
-      departmentsList.value[index] = deptForm.value.name
-      // Update employees in this department
-      employeeData.value.forEach(emp => {
-        if (emp.department === oldDeptName.value) emp.department = deptForm.value.name
-      })
+  try {
+    if (isEditingDept.value) {
+      const res = await updateDepartment(oldDept.value.id, { name: deptForm.value.name })
+      const index = departmentsListRaw.value.findIndex(d => d.id === oldDept.value.id)
+      if (index !== -1) {
+        departmentsListRaw.value[index] = res.data
+        loadData()
+      }
+    } else {
+      const res = await createDepartment({ name: deptForm.value.name })
+      departmentsListRaw.value.push(res.data)
     }
-  } else {
-    departmentsList.value.push(deptForm.value.name)
+    deptFormDialog.value = false
+  } catch (err) {
+    console.error('Error saving department', err)
   }
-  deptFormDialog.value = false
 }
 
-const deleteDept = (name) => {
-  departmentsList.value = departmentsList.value.filter(d => d !== name)
+const deleteDept = async (deptName) => {
+  try {
+    const dept = departmentsListRaw.value.find(d => d.name === deptName)
+    if (dept) {
+      await deleteDepartment(dept.id)
+      departmentsListRaw.value = departmentsListRaw.value.filter(d => d.id !== dept.id)
+    }
+  } catch (err) {
+    console.error('Error deleting department', err)
+  }
 }
 
 const getInitials = (name) => {
-  return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+  if (!name) return ''
+  const parts = name.split(' ').filter(n => n)
+  if (parts.length === 0) return ''
+  return parts.map(n => n[0]).join('').substring(0, 2).toUpperCase()
 }
 
 const getStatusColor = (status) => {
