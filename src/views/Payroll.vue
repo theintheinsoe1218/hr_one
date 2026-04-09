@@ -422,7 +422,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { getEmployees } from '../services/employeeService'
-import { getPayroll, createPayroll, updatePayrollStatus } from '../services/payrollService'
+import { getPayroll, createPayroll, updatePayrollStatus as updatePayrollStatusService } from '../services/payrollService'
 
 const addPayrollDialog = ref(false)
 const autoGenDialog = ref(false)
@@ -541,7 +541,7 @@ const selectAllEmps = () => {
 
 const updatePayrollStatus = async (item, status) => {
   try {
-     await updatePayrollStatus(item.id, status)
+     await updatePayrollStatusService(item.id, status)
   } catch (err) {
     console.error('Error updating status', err)
   }
